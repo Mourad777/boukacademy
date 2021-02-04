@@ -54,7 +54,7 @@ const testSchema = new Schema({
   },
   notes: {
     type: String,
-    required: true,
+    required: false,
   },
   allowLateSubmission: {
     type: Boolean,
