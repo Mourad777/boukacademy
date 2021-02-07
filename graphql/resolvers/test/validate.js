@@ -19,7 +19,7 @@ const validateTest = async (
     (test) => test.assignment
   );
 
-  if (!validator.isLength(testInput.testName, { min: 1 })) {
+  if (!validator.isLength(testInput.testName, { min: 1 }) || !testInput.testName.trim()) {
     errors.push({ message: "Test name must be atleast 1 character." });
   }
   if (testInput.assignment) {

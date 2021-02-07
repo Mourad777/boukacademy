@@ -497,6 +497,7 @@ module.exports = {
       courseId: id,
       message: "The course was deleted",
     });
+    
 
     const courseDirectory = `courses/${id}`;
     await emptyS3Directory(courseDirectory);

@@ -11,7 +11,7 @@ const Configuration = require("../../../models/configuration");
 module.exports = {
   userLogin: async function ({ email, password, userType }) {
     const user = await require(`../../../models/${userType}`).findOne({
-      email: email.toLowerCase(),
+      email: email.toLowerCase().trim(),
     });
     if (!user) {
       const error = new Error(`${userType}NoAccount`);
@@ -207,8 +207,8 @@ module.exports = {
     const user = new User({
       _id: userId,
       email: xss(accountInput.email.toLowerCase().trim(), noHtmlTags),
-      firstName: xss(accountInput.firstName, noHtmlTags),
-      lastName: xss(accountInput.lastName, noHtmlTags),
+      firstName: xss(accountInput.firstName.trim(), noHtmlTags),
+      lastName: xss(accountInput.lastName.trim(), noHtmlTags),
       language: xss(accountInput.language, noHtmlTags),
       password: hashedPw,
       accountVerified: false,

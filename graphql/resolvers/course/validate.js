@@ -20,7 +20,7 @@ const validateCourse = async (courseInput, req) => {
     }
   });
 
-  if (!validator.isLength(courseInput.courseName, { min: 1 })) {
+  if (!validator.isLength(courseInput.courseName, { min: 1 }) || !(courseInput.courseName.trim())) {
     errors.push({ message: "Course must be atleast 1 character." });
   }
 

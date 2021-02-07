@@ -358,6 +358,8 @@ module.exports = {
     await emptyS3Directory(lessonDirectory);
     io.getIO().emit("updateCourses", {
       userType: "student",
+      action:'deleteLesson',
+      lessonId:id,
     });
     return true;
   },
