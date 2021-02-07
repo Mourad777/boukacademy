@@ -103,7 +103,7 @@ module.exports = {
       let content = "newLesson";
       let subject = "newLessonSubject";
       let date;
-      if(!isLessonReleaseDate && lessonReleaseDate){
+      if (!isLessonReleaseDate && lessonReleaseDate) {
         date = new Date(lessonInput.availableOnDate).getTime()
         content = "newLessonLaterDate";
       }
@@ -118,8 +118,8 @@ module.exports = {
         content,
         subject,
         date,
-        lesson:createdLesson,
-        condition:'isLessonEmails'
+        lesson: createdLesson,
+        condition: 'isLessonEmails'
       });
     }
 
@@ -231,7 +231,7 @@ module.exports = {
       parseInt(lessonReleaseDate)
     ).format("dddd, MMMM Do YYYY, HH:mm");
 
-    const isReleaseDateChanged = (lessonReleaseDate||'').toString() !== (oldDessonReleaseDate||'').toString();
+    const isReleaseDateChanged = (lessonReleaseDate || '').toString() !== (oldDessonReleaseDate || '').toString();
 
     await Notification.findOneAndDelete({
       documentId: lesson._id,
@@ -264,27 +264,26 @@ module.exports = {
         documentType: "lesson",
       });
     }
-
-    lesson.lessonName = xss(lessonInput.lessonName.trim(), noHtmlTags);
-    lesson.published = lessonInput.published;
-    lesson.availableOnDate = lessonInput.availableOnDate;
-    lesson.lessonSlides = slides;
-    lesson.course = lessonInput.course;
+    console.log('is notif: ',notification);
     if (notification) await notification.save();
-    const updatedLesson = await lesson.save();
-    io.getIO().emit("updateCourses", {
-      userType: "student",
-    });
 
     const isSendEmails = instructorConfig.isSendLessonEmails;
-    if (isSendEmails) {
+    if (isSendEmails  && lessonInput.published) {
       let content = "lessonUpdated";
       let subject = "lessonUpdatedSubject";
+
       let date;
-      if(!isLessonReleaseDate && lessonReleaseDate){
+      if (!isLessonReleaseDate && lessonReleaseDate) {
         date = new Date(lessonInput.availableOnDate).getTime();
         content = "lessonUpdatedDateChanged";
       }
+      if (!lesson.published) {
+        content = "newLesson"
+        subject = "newLessonSubject"
+        if (!isLessonReleaseDate && lessonReleaseDate)
+          content = "newLessonLaterDate"
+      }
+
       const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
         if (rq.approved) {
           return rq.student;
@@ -297,9 +296,22 @@ module.exports = {
         subject,
         date,
         lesson,
-        condition:'isLessonEmails'
+        condition: 'isLessonEmails'
       });
+
     }
+
+    lesson.lessonName = xss(lessonInput.lessonName.trim(), noHtmlTags);
+    lesson.published = lessonInput.published;
+    lesson.availableOnDate = lessonInput.availableOnDate;
+    lesson.lessonSlides = slides;
+    lesson.course = lessonInput.course;
+    const updatedLesson = await lesson.save();
+    io.getIO().emit("updateCourses", {
+      userType: "student",
+    });
+
+
     return {
       ...updatedLesson._doc,
       _id: updatedLesson._id.toString(),
@@ -358,8 +370,8 @@ module.exports = {
     await emptyS3Directory(lessonDirectory);
     io.getIO().emit("updateCourses", {
       userType: "student",
-      action:'deleteLesson',
-      lessonId:id,
+      action: 'deleteLesson',
+      lessonId: id,
     });
     return true;
   },
