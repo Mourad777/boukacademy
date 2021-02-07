@@ -188,6 +188,7 @@ module.exports = buildSchema(`
     }
 
     type Resource {
+        _id:ID!
         resourceName:String!
         resource:String!
     }

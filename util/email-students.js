@@ -64,11 +64,9 @@ const getOfficehourTemplate = (course, language) => {
 };
 
 const getReadableDate = (date, language) => {
-  console.log('getting readable date: ',date)
   const readableDate = date
     ? momentTZ(date).locale(language).format("MMMM DD YYYY HH:mm z")
     : "";
-  console.log('returning readable date: ',readableDate)
   return readableDate;
 };
 
@@ -82,7 +80,6 @@ const getEmailContent = (
   grade,
   language
 ) => {
-  console.log('date in email content: ',date);
   const emailContent = i18n.__(content, {
     courseName: course.courseName,
     lessonName: lesson.lessonName,
@@ -99,7 +96,6 @@ const getEmailContent = (
     latePenalty: test.latePenalty,
     lateDaysAllowed: test.lateDaysAllowed,
   });
-  console.log('returning email content: ',emailContent)
   return emailContent;
 };
 
@@ -119,12 +115,10 @@ const sendEmailsToStudents = async ({
       const studentConfig = await Configuration.findOne({ user: st });
       const student = await Student.findById(st);
       if(!student)return null;
-      console.log('found student in loop: ',student)
       const language = student.language;
       const email = student.email;
       //check to see if student has allowed this type of email notification
       const isRecieveEmails = studentConfig[condition];
-      console.log("isRecieveEmails", isRecieveEmails);
       if (isRecieveEmails) {
         i18n.setLocale(language);
         let subContent = "",
@@ -143,7 +137,6 @@ const sendEmailsToStudents = async ({
           const adminSettings = admin._doc.configuration;
           grade = adminSettings.dropCourseGrade;
         }
-        console.log('1** date: ',date);
         let emailData = "";
         if (!Array.isArray(content)) {
           emailData = `<h2 style="font-family:sans-serif;font-weight:400;color:black;">
@@ -186,6 +179,7 @@ const sendEmailsToStudents = async ({
             testOrAssignment: test.assignment
               ? i18n.__("assignment")
               : i18n.__("test"),
+            workName:test.testName
           }),
           html: `
             <p>to:${student.firstName}</p>

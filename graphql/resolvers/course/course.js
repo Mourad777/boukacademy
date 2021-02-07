@@ -549,6 +549,7 @@ module.exports = {
         const fixedResources = await Promise.all(
           (course.resources || []).map(async (r) => {
             return {
+              _id:r._id,
               resourceName: r.resourceName,
               resource: await getObjectUrl(r.resource),
             };

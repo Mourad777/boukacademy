@@ -31,6 +31,8 @@ module.exports = {
         .map(async (n) => {
           const seen = (n.usersSeen || []).includes(req.userId.toString());
           const course = await Course.findById(n.course);
+
+          //filter notifications according to users config settings
           if (
             (n.documentType === "courseOfficeHours" &&
               !configuration.isCourseNotifications) ||
