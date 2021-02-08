@@ -210,30 +210,34 @@ module.exports = {
 
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
-    if (
-      (isSendTestEmails && !testInput.assignment) ||
-      (isSendAssignmentEmails && testInput.assignment)
-    ) {
-      let content = "newWorkPosted";
-      let subject = "newWorkPostedSubject";
-      let date;
-      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-        if (rq.approved) {
-          return rq.student;
-        }
-      });
-      await sendEmailsToStudents({
-        studentIdsEnrolled,
-        course,
-        content,
-        subject,
-        date,
-        test: createdTest,
-        condition: createdTest.assignment
-          ? "isAssignmentEmails"
-          : "isTestEmails",
-      });
+    if (testInput.published) {
+      if (
+        (isSendTestEmails && !testInput.assignment) ||
+        (isSendAssignmentEmails && testInput.assignment)
+      ) {
+        let content = "newWorkPosted";
+        let subject = "newWorkPostedSubject";
+        let date;
+        const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+          if (rq.approved) {
+            return rq.student;
+          }
+        });
+        await sendEmailsToStudents({
+          studentIdsEnrolled,
+          course,
+          content,
+          subject,
+          date,
+          test: createdTest,
+          condition: createdTest.assignment
+            ? "isAssignmentEmails"
+            : "isTestEmails",
+        });
+      }
+
     }
+
     io.getIO().emit("updateCourses", {
       userType: "student",
       // _id:(newNotification||'')._id,
@@ -410,14 +414,13 @@ module.exports = {
     const content = [];
     let testPostedContent;
     if (!test.published)
-      testPostedContent = `A new ${
-        test.assignment ? "assignment" : "test"
-      } was posted`;
+      testPostedContent = `A new ${test.assignment ? "assignment" : "test"
+        } was posted`;
 
     if (
       test.published &&
       (new Date(testInput.dueDate).getTime() || "").toString() !==
-        (new Date(test.dueDate).getTime() || "").toString()
+      (new Date(test.dueDate).getTime() || "").toString()
     ) {
       if (testInput.dueDate) {
         content.push("changeWorkDueDate");
@@ -429,7 +432,7 @@ module.exports = {
     if (
       test.published &&
       (new Date(testInput.availableOnDate).getTime() || "").toString() !==
-        (new Date(test.availableOnDate).getTime() || "").toString()
+      (new Date(test.availableOnDate).getTime() || "").toString()
     ) {
       if (testInput.availableOnDate) {
         content.push("changeWorkAvailableOnDate");
@@ -442,7 +445,7 @@ module.exports = {
       test.published &&
       !testInput.allowLateSubmission &&
       (testInput.allowLateSubmission || "").toString() !==
-        (test.allowLateSubmission || "").toString() &&
+      (test.allowLateSubmission || "").toString() &&
       testInput.dueDate
     )
       content.push(`assignmentLateSubmissionRemoved`);
@@ -450,7 +453,7 @@ module.exports = {
       test.published &&
       testInput.allowLateSubmission &&
       (testInput.allowLateSubmission || "").toString() !==
-        (test.allowLateSubmission || "").toString()
+      (test.allowLateSubmission || "").toString()
     )
       content.push("assignmentLateSubmissionAllowed");
 
@@ -459,7 +462,7 @@ module.exports = {
       testInput.allowLateSubmission &&
       test.allowLateSubmission &&
       (testInput.lateDaysAllowed || "").toString() !==
-        (test.lateDaysAllowed || "").toString()
+      (test.lateDaysAllowed || "").toString()
     )
       content.push("assignmentMaxLateDaysChanged");
     if (
@@ -467,7 +470,7 @@ module.exports = {
       testInput.allowLateSubmission &&
       test.allowLateSubmission &&
       (testInput.latePenalty || "").toString() !==
-        (test.latePenalty || "").toString()
+      (test.latePenalty || "").toString()
     )
       content.push("assignmentDailyPenaltyChanged");
     if ((content.length > 0 || testPostedContent) && testInput.published) {
@@ -545,7 +548,7 @@ module.exports = {
         studentIdsEnrolled,
         course,
         content: testPostedContent ? "newWorkPosted" : content,
-        subject,
+        subject:testPostedContent ? "newWorkPosted" : subject,
         date: test.availableOnDate,
         dateSecondary: test.dueDate,
         test: updatedTest,
@@ -772,10 +775,10 @@ module.exports = {
         $unset: { testInSession: { test: id } },
         $pull: areAssignmentsInSessionToDelete
           ? {
-              assignmentsInSession: {
-                $or: assignmentSessionIdsToDelete,
-              },
-            }
+            assignmentsInSession: {
+              $or: assignmentSessionIdsToDelete,
+            },
+          }
           : {},
         $pullAll: { testResults: resultsToPull },
       },
@@ -954,8 +957,8 @@ module.exports = {
         $pull: {
           assignmentsInSession: areAssignmentsInSessionToDelete
             ? {
-                $or: assignmentSessionIdsToDelete,
-              }
+              $or: assignmentSessionIdsToDelete,
+            }
             : {},
         },
         $unset: {
@@ -995,7 +998,7 @@ module.exports = {
     await notification.save();
 
     await emptyS3Directory(resultDirectory);
-    
+
     if (
       (isSendTestEmails && !test.assignment) ||
       (isSendAssignmentEmails && test.assignment)
