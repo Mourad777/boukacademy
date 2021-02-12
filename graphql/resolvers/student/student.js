@@ -7,7 +7,6 @@ const Result = require("../../../models/result");
 const Instructor = require("../../../models/instructor");
 const Notification = require("../../../models/notification");
 const Configuration = require("../../../models/configuration");
-
 const io = require("../../../socket");
 require("dotenv").config();
 const xss = require("xss");
@@ -20,7 +19,6 @@ const { updateUrls } = require("../../../util/getUpdatedUrls");
 const { updateResultUrls } = require("../../../util/updateResultUrls");
 const { getObjectUrl } = require("../../../s3");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-const moment = require("moment");
 
 module.exports = {
   testResults: async function ({ }, req) {
@@ -431,7 +429,7 @@ module.exports = {
       createdResult = await result.save();
       student.testResults.push(createdResult._id);
       student.assignmentsInSession.push(assignmentInSession);
-      await student.save((e) => console.log("e: ", e));
+      await student.save();
     }
     //notify the instructor in real-time that the test has started
     const fixedTest = await updateTestUrls(test);

@@ -3,7 +3,7 @@ const moment = require("moment");
 const Test = require("../../../models/test");
 const Course = require("../../../models/course");
 const { checkDuplicates } = require("../../../util/checkDuplicates");
-//there should not
+
 const validateTest = async (
   testInput,
   multipleChoiceQuestionsInput,
@@ -280,7 +280,6 @@ const validateTest = async (
     "test",
   ];
   (testInput.readingMaterials || []).forEach((material, index) => {
-    console.log("each reading material: ", material);
     //************sanitize material.content for xss *************/
     if (!materialSections.includes(material.section)) {
       errors.push({
@@ -579,7 +578,6 @@ const validateTest = async (
           } is a selectable answer therefore you must make at least 1 incorrect answer to choose from`,
         });
       }
-      console.log("999 validating 999", trimmedIncorrectAnswers);
       const duplicateIncorrectAnswers = checkDuplicates(
         trimmedIncorrectAnswers
       );

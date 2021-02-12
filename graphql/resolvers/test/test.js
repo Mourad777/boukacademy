@@ -9,7 +9,6 @@ const Question = require("../../../models/question");
 const Result = require("../../../models/result");
 const Instructor = require("../../../models/instructor");
 const Configuration = require("../../../models/configuration");
-
 const io = require("../../../socket");
 const { validateTest } = require("./validate");
 const xss = require("xss");

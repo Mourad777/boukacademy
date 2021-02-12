@@ -32,6 +32,7 @@ const {
 } = require("./sockets/listeners");
 // app.use(cors())
 // Here you might use middleware, attach routes, etc.
+//console.log
 const graphqlSchema = require("./graphql/schemas/index");
 const graphqlResolver = require("./graphql/resolvers/index");
 const graphqlHttp = require("express-graphql");
@@ -83,11 +84,8 @@ app.put("/upload", async (req, res, next) => {
   if (!req.instructorIsAuth && !req.studentIsAuth) {
     return res.status(401).json({ message: "Not authenticated!" });
   }
-  console.log("req.instructorIsAuth", req.instructorIsAuth);
   const key = req.body.key;
   const fileType = req.body.fileType;
-  console.log("fileType: ", fileType);
-  console.log("key: ", key);
   const fileExtension =
     key.substring(key.lastIndexOf(".") + 1, key.length) || key;
 
@@ -140,7 +138,6 @@ app.put("/upload", async (req, res, next) => {
   const tagKey = 'fileType';
   const tagValue = fileType;
     s3.createPresignedPost(params, (err, data) => {
-      console.log("resolved data: ", data);
       res.send({
         uploaded: 1,
         presignedUrl: {
@@ -165,7 +162,6 @@ app.put("/get-file", async (req, res, next) => {
 });
 
 app.put("/delete-files", (req, res, next) => {
-  console.log('in delete request: ',req.body)
   let object;
   if (Array.isArray(req.body.url)) {
     object = req.body.url.map((url) => {
@@ -234,7 +230,6 @@ mongoose
   .then((result) => {
     console.log("connected to mongoose");
     // Don't expose our internal server to the outside.
-    console.log("i18n test", i18n.__("Hello"));
     const expressServer = app.listen(port);
     const io = require("./socket").init(expressServer);
 

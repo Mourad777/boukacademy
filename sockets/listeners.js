@@ -11,7 +11,7 @@ const { getObjectUrl } = require("../s3");
 const client = redis.createClient(process.env.REDIS_URL);
 const io = require("../socket");
 
-//important notes
+//important notes 
 //the whole point of storing the user id with the socket id
 //is to have a private channel for 2 users to communicate
 //with eachother
@@ -40,7 +40,6 @@ const onLoggedIn = (socket) => {
     //update active user ui
     client.get("activeUsers", function (err, value) {
       const parsedActiveUsers = JSON.parse(value) || [];
-      console.log("parsedActiveUsers", parsedActiveUsers);
       //check to see if user is not already in array
       if (!parsedActiveUsers.includes(data.user)) {
         const updatedActiveUsers = [...parsedActiveUsers, data.user];
@@ -52,6 +51,7 @@ const onLoggedIn = (socket) => {
   });
 };
 
+//called when user moves mouse or types on screen (any activity)
 const onActive = (socket) => {
   socket.on("active", async (data) => {
     let userType;
@@ -84,7 +84,6 @@ const onActive = (socket) => {
 
     client.get("activeUsers", function (err, value) {
       const parsedActiveUsers = JSON.parse(value) || [];
-      console.log("parsedActiveUsers", parsedActiveUsers);
       //check to see if user is not already in array
       if (!parsedActiveUsers.includes(data.user)) {
         const updatedActiveUsers = [...parsedActiveUsers, data.user];
@@ -96,6 +95,7 @@ const onActive = (socket) => {
   });
 };
 
+//called when a user is idle
 const onIdle = (socket) => {
   socket.on("idle", async (data) => {
     client.get("activeUsers", function (err, value) {
@@ -184,7 +184,6 @@ const onInitializeContacts = (socket) => {
 //leaving chat room
 const onLeave = (socket) => {
   socket.on("leave", async (data) => {
-    console.log("leaving: ", data);
     const recipient = data.recipient;
     const dmRoom = [recipient._id, socket.userId].sort().join("");
     socket.leave(dmRoom);
@@ -247,7 +246,6 @@ const onMessage = (socket) => {
       throw error;
     }
     const chatAlwaysAllowed = config.isChatAllowedOutsideOfficehours;
-    console.log("chatAlwaysAllowed", chatAlwaysAllowed);
     if (commStudentInstructor) {
       const isValid = chatAlwaysAllowed
         ? true
@@ -319,7 +317,6 @@ const onMessage = (socket) => {
               type: msg.userType,
             };
             const socketId = userData;
-            console.log("getting socket id", socketId);
             socket.to(socketId).emit("alert", {
               ...msg,
               _id: newNotification._id,
@@ -338,9 +335,7 @@ const onMessage = (socket) => {
 
 const onLogout = (socket) => {
   socket.on("loggedOut", function () {
-    console.log("inactive user");
     //Each socket also fires a special disconnect event:
-    // console.log("disconnect", socket.id);
     //get user from token
     const user = socket.userId;
 
@@ -352,7 +347,6 @@ const onLogout = (socket) => {
       const index = parsedActiveUsers.indexOf(user);
       if (index > -1) {
         parsedActiveUsers.splice(index, 1);
-        console.log("updatedActiveUsers", parsedActiveUsers);
         client.set(
           "activeUsers",
           JSON.stringify(parsedActiveUsers),

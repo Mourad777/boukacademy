@@ -52,7 +52,7 @@ const validateCreateAccount = async (accountInput) => {
   const userFoundWithEmail = await require(`../../../models/${userType}`).findOne(
     { email: accountInput.email.trim() }
   );
-    console.log('email input: ',accountInput.email)
+
   if (
     !validator.isEmail(accountInput.email.trim()) ||
     validator.isEmpty(accountInput.email.trim() || "") ||

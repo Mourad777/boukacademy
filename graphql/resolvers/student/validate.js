@@ -25,7 +25,7 @@ const validateSubmitTest = async (
   const isEssaySection = instructorTest.sectionWeights.essaySection;
   const isSpeakingSection = instructorTest.sectionWeights.speakingSection;
   const isFillBlankSection = instructorTest.sectionWeights.fillBlankSection;
-  //sanitize grade adjustment explanation
+
   if (!validator.isBoolean(testClosed + "")) {
     errors.push({ message: "Test closed must be true or false" });
   }
@@ -395,9 +395,6 @@ const validateSubmitTest = async (
       const blank =
         ((instructorTest.fillInBlanksQuestions || {}).blanks || [])[index] ||
         {};
-        console.log('blank.correctAnswer',blank.correctAnswer);
-        console.log('blank.incorrectAnswers',blank.incorrectAnswers);
-        console.log('q.answer',q.answer)
       if (blank.selectableAnswer) {
         if (
           !(blank.incorrectAnswers || []).includes(q.answer) &&

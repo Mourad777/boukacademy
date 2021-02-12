@@ -264,7 +264,6 @@ module.exports = {
         documentType: "lesson",
       });
     }
-    console.log('is notif: ',notification);
     if (notification) await notification.save();
 
     const isSendEmails = instructorConfig.isSendLessonEmails;
@@ -418,7 +417,6 @@ module.exports = {
   },
 
   markSlideAsSeen: async function ({ lessonId, slideNumber }, req) {
-    console.log("params: ", lessonId, slideNumber);
     if (!req.studentIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;

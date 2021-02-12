@@ -143,8 +143,6 @@ module.exports = {
       }
     });
 
-    // const students = await Student.find({coursesEnrolled:course._id});
-    // console.log('found students enrolled: ',students);
     const isSendEmails = instructorConfig.isSendCourseEmails;
     const prevRegOfficeHours = course.regularOfficeHours.map((o) => {
       return { day: o.day, startTime: o.startTime, endTime: o.endTime };

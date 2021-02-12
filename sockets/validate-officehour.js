@@ -1,7 +1,6 @@
 const moment = require("moment");
 const getDayIndex = require("../util/getDayIndex");
 const momentTZ = require("moment-timezone");
-
 const validateOfficehour = (course, instructor, student) => {
   // const allTimezones = momentTZ.tz.names();
 
@@ -58,11 +57,6 @@ const validateOfficehour = (course, instructor, student) => {
     const ohEndTimeStampAdjusted =
       momentTZ.tz.zone(region).utcOffset(ohEndTimeStamp) * 60 * 1000 +
       ohEndTimeStamp;
-    console.log(
-      "regular is time: ",
-      ohStartTimeStampAdjusted < currentTimeStamp &&
-        ohEndTimeStampAdjusted > currentTimeStamp
-    );
     if (
       foundTodaysOfficehour &&
       ohStartTimeStampAdjusted < currentTimeStamp &&
@@ -70,10 +64,8 @@ const validateOfficehour = (course, instructor, student) => {
       ohStartTimeStampAdjusted &&
       ohEndTimeStampAdjusted
     ) {
-      console.log("reg chat is allowed");
       isRegularOfficehoursTime = true;
     } else {
-      console.log("chat block in regular office hours");
       isRegularOfficehoursTime = false;
     }
   }
@@ -84,7 +76,6 @@ const validateOfficehour = (course, instructor, student) => {
     const foundValidIrregularOh = irregularOfficeHours.find((oh) => {
       const region = (oh || {}).timezoneRegion;
       // const timezoneOffset = oh.timezoneOffset * 60 * 1000;
-      // console.log("ireg timezone offset: ", timezoneOffset);
       const currentIrregTimeMoment = `${momentTZ().hour()}:${momentTZ().minutes()}`;
       const currentIrregTime = `${new Date().getHours()}:${new Date().getMinutes()}`;
       const irregCurrentTimeStamp = new Date(
@@ -115,7 +106,6 @@ const validateOfficehour = (course, instructor, student) => {
           irregCurrentTimeStampAdjusted &&
         new Date(ohEndTimeStampAdjusted).setDate(1) >
           irregCurrentTimeStampAdjusted;
-      console.log("isTime: ", isTime);
       const dateZeroHours = new Date(Date.now()).setHours(0, 0, 0, 0);
       const dateZeroHoursAdjusted = new Date(
         Date.now() - momentTZ.tz.zone(region).utcOffset(Date.now()) * 60 * 1000
@@ -128,24 +118,21 @@ const validateOfficehour = (course, instructor, student) => {
       const isDate =
         // new Date(dateZeroHours).setDate(new Date().getDate())
         dateZeroHoursAdjusted === ohDateTimeStampAdjusted;
-      console.log("isDate: ", isDate);
       if (isDate && isTime) {
         return oh;
       }
     });
     if (foundValidIrregularOh) {
-      console.log("chat allowed irregular office hour");
+      // console.log("chat allowed irregular office hour");
       isIrregularOfficehoursTime = true;
     } else {
       isIrregularOfficehoursTime = false;
-      console.log("chat blocked for irregular office hour");
+      // console.log("chat blocked for irregular office hour");
     }
   }
   if ((isIrregularOfficehoursTime || isRegularOfficehoursTime) && isValid) {
-    console.log("returning true");
     return true;
   } else {
-    console.log("returning false");
     return false;
   }
 };

@@ -16,19 +16,12 @@ const sendEmailToOneUser = async ({
   test={},
   message,
 }) => {
-  console.log("userId: ", userId);
-  console.log("userType: ", userType);
   const User = require(`../models/${userType}`);
   const user = await User.findById(userId);
-  console.log("user: ", user);
   const userConfig = await Configuration.findOne({ user: userId });
-  console.log("userConfig: ", userConfig);
-
   const language = user.language;
-  console.log("language: ", language);
   //check to see if student has allowed this type of email notification
   const isRecieveEmails = userConfig[condition];
-  console.log("isRecieveEmails", isRecieveEmails);
   if (isRecieveEmails) {
     i18n.setLocale(language);
     let passOrFail = passed ? i18n.__("passed") : i18n.__("failed");

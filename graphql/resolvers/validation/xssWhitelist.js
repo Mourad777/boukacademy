@@ -12,6 +12,15 @@ const textEditorWhitelist = {
       h3:[],
       h4:[],
       strong:[],
+      i:[],
+      td:[],
+      th:[],
+      tr:[],
+      table:[],
+      br:[],
+      thead:[],
+      tbody:[],
+      tfoot:[],
     }
   };
 
