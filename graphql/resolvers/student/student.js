@@ -23,7 +23,7 @@ const { sendEmailToOneUser } = require("../../../util/email-user");
 const moment = require("moment");
 
 module.exports = {
-  testResults: async function ({}, req) {
+  testResults: async function ({ }, req) {
     if (!req.studentIsAuth) {
       const error = new Error("No student logged in");
       error.code = 401;
@@ -904,18 +904,21 @@ module.exports = {
     //     (isSendAssignmentEmails && test.assignment)) &&
     //   req.studentIsAuth
     // ) {
-    await sendEmailToOneUser({
-      userId: course.courseInstructor,
-      course,
-      subject: "workSubmittedSubject",
-      content: "workSubmitted",
-      student,
-      condition: test.assignment
-        ? "isAssignmentEmails"
-        : "isTestEmails",
-      userType: "instructor",
-      test,
-    });
+    if (testClosed) {
+      await sendEmailToOneUser({
+        userId: course.courseInstructor,
+        course,
+        subject: "workSubmittedSubject",
+        content: "workSubmitted",
+        student,
+        condition: test.assignment
+          ? "isAssignmentEmails"
+          : "isTestEmails",
+        userType: "instructor",
+        test,
+      });
+    }
+
     // }
     if (req.studentIsAuth) {
       io.getIO().emit("updateStudents", {
