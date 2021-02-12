@@ -27,7 +27,7 @@ const validateTest = async (
       if (
         (testInput.testId || "").toString() !== (test._id || "").toString() &&
         test.testName.toLowerCase().trim() ===
-          testInput.testName.toLowerCase().trim()
+        testInput.testName.toLowerCase().trim()
       ) {
         errors.push({
           message: "You already have an assignment with that name.",
@@ -40,7 +40,7 @@ const validateTest = async (
       if (
         (testInput.testId || "").toString() !== (test._id || "").toString() &&
         test.testName.toLowerCase().trim() ===
-          testInput.testName.toLowerCase().trim()
+        testInput.testName.toLowerCase().trim()
       ) {
         errors.push({ message: "You already have a test with that name." });
       }
@@ -272,6 +272,17 @@ const validateTest = async (
       message: "Grade release date should be after the due date",
     });
   }
+  console.log('testInput.allowLateSubmission', testInput.allowLateSubmission)
+  console.log('gradeRelease', gradeRelease)
+  console.log('dueOn', dueOn)
+  console.log('(dueOn + 86,400,000 * testInput.lateDaysAllowed)', (dueOn + 86400000 * testInput.lateDaysAllowed))
+  console.log('testInput.lateDaysAllowed', testInput.lateDaysAllowed)
+  console.log('dueOn + 86,400,000 * testInput.lateDaysAllowed)  < gradeRelease', (dueOn + 86400000 * testInput.lateDaysAllowed) < gradeRelease)
+  if (!((dueOn + 86400000 * testInput.lateDaysAllowed) < gradeRelease) && gradeRelease && dueOn && testInput.allowLateSubmission) {
+    errors.push({
+      message: "Grade release date should be after the due date plus the number of late days allowed",
+    });
+  }
   const materialSections = [
     "multipleChoice",
     "essay",
@@ -382,47 +393,41 @@ const validateTest = async (
       //sanitize item.question item.answerOptions item.solution
       if (validator.isEmpty(item.question)) {
         errors.push({
-          message: `[Multiple-choice section error] Question ${
-            index + 1
-          } is empty`,
+          message: `[Multiple-choice section error] Question ${index + 1
+            } is empty`,
         });
       }
       if (!validator.isFloat(item.marks + "") || !(item.marks > 0)) {
         errors.push({
-          message: `[Multiple-choice section error] Marks in question ${
-            index + 1
-          } needs to be an integer or decimal number greater than 0`,
+          message: `[Multiple-choice section error] Marks in question ${index + 1
+            } needs to be an integer or decimal number greater than 0`,
         });
       }
       const numberOfAnswerOptions = (item.answerOptions || []).length;
       const numberOfCorrectAnswers = (item.correctAnswers || []).length;
       if (numberOfAnswerOptions === numberOfCorrectAnswers) {
         errors.push({
-          message: `[Multiple-choice section error] At least 1 answer option must remain unchecked in question ${
-            index + 1
-          }`,
+          message: `[Multiple-choice section error] At least 1 answer option must remain unchecked in question ${index + 1
+            }`,
         });
       }
       if (numberOfCorrectAnswers === 0) {
         errors.push({
-          message: `[Multiple-choice section error] You must select at least 1 correct answer in question ${
-            index + 1
-          }`,
+          message: `[Multiple-choice section error] You must select at least 1 correct answer in question ${index + 1
+            }`,
         });
       }
       if (numberOfAnswerOptions < 2) {
         errors.push({
-          message: `[Multiple-choice section error] There must be at least 2 answer options in question ${
-            index + 1
-          }`,
+          message: `[Multiple-choice section error] There must be at least 2 answer options in question ${index + 1
+            }`,
         });
       }
       item.answerOptions.forEach((option, answerIndex) => {
         if (validator.isEmpty(option)) {
           errors.push({
-            message: `[Multiple-choice section error] Answer option ${
-              answerIndex + 1
-            } in question ${index + 1} is empty`,
+            message: `[Multiple-choice section error] Answer option ${answerIndex + 1
+              } in question ${index + 1} is empty`,
           });
         }
       });
@@ -431,9 +436,8 @@ const validateTest = async (
         checkDuplicates(item.correctAnswers) || [];
       if (duplicateCorrectAnswers.length > 0) {
         errors.push({
-          message: `[Multiple-choice section error] The correct answers cannot repeat themselves in question ${
-            index + 1
-          }`,
+          message: `[Multiple-choice section error] The correct answers cannot repeat themselves in question ${index + 1
+            }`,
         });
       }
       const trimmedAnswerOptions = (item.answerOptions || []).map((answer) =>
@@ -443,24 +447,21 @@ const validateTest = async (
         checkDuplicates(trimmedAnswerOptions) || [];
       if (duplicateAnswerOptions.length > 0) {
         errors.push({
-          message: `[Multiple-choice section error] The answer options cannot repeat themselves in question ${
-            index + 1
-          }`,
+          message: `[Multiple-choice section error] The answer options cannot repeat themselves in question ${index + 1
+            }`,
         });
       }
       item.correctAnswers.forEach((answer) => {
         if (!validator.isInt(answer + "") || !(parseInt(answer) > 0)) {
           errors.push({
-            message: `[Multiple-choice section error] The correct answer must be an integer greater than 0 in question ${
-              index + 1
-            }`,
+            message: `[Multiple-choice section error] The correct answer must be an integer greater than 0 in question ${index + 1
+              }`,
           });
         }
         if (!(parseInt(answer) <= numberOfAnswerOptions)) {
           errors.push({
-            message: `[Multiple-choice section error] Their is no correct answer ${answer}, the total amount of answers is ${numberOfAnswerOptions} in question ${
-              index + 1
-            }`,
+            message: `[Multiple-choice section error] Their is no correct answer ${answer}, the total amount of answers is ${numberOfAnswerOptions} in question ${index + 1
+              }`,
           });
         }
       });
@@ -477,9 +478,8 @@ const validateTest = async (
       }
       if (!validator.isFloat(item.marks + "") || !(item.marks > 0)) {
         errors.push({
-          message: `[Essay section error] Marks in question ${
-            index + 1
-          } needs to be an integer or decimal number greater than 0`,
+          message: `[Essay section error] Marks in question ${index + 1
+            } needs to be an integer or decimal number greater than 0`,
         });
       }
     });
@@ -493,9 +493,8 @@ const validateTest = async (
         validator.isEmpty(item.questionAudio)
       ) {
         errors.push({
-          message: `[Speaking section error] Must provide a text question or audio question in question ${
-            index + 1
-          }`,
+          message: `[Speaking section error] Must provide a text question or audio question in question ${index + 1
+            }`,
         });
       }
       if (
@@ -503,16 +502,14 @@ const validateTest = async (
         !validator.isEmpty(item.questionAudio)
       ) {
         errors.push({
-          message: `[Speaking section error] Can't have both text question and audio question in question ${
-            index + 1
-          }`,
+          message: `[Speaking section error] Can't have both text question and audio question in question ${index + 1
+            }`,
         });
       }
       if (!validator.isFloat(item.marks + "") || !(item.marks > 0)) {
         errors.push({
-          message: `[Speaking section error] Marks in question ${
-            index + 1
-          } needs to be an integer or decimal number greater than 0`,
+          message: `[Speaking section error] Marks in question ${index + 1
+            } needs to be an integer or decimal number greater than 0`,
         });
       }
     });
@@ -545,24 +542,21 @@ const validateTest = async (
     ((fillBlankQuestionsInput || {}).blanks || []).forEach((blank, index) => {
       if (!validator.isFloat(blank.marks + "") || !(blank.marks > 0)) {
         errors.push({
-          message: `[Fill-in-the-blanks section error] Marks in blank ${
-            index + 1
-          } needs to be an integer or decimal number greater than 0`,
+          message: `[Fill-in-the-blanks section error] Marks in blank ${index + 1
+            } needs to be an integer or decimal number greater than 0`,
         });
       }
       if (!validator.isBoolean(blank.selectableAnswer + "")) {
         errors.push({
-          message: `[Fill-in-the-blanks section error] Selectable answer in blank ${
-            index + 1
-          } needs to be true or false`,
+          message: `[Fill-in-the-blanks section error] Selectable answer in blank ${index + 1
+            } needs to be true or false`,
         });
       }
       (blank.incorrectAnswers || []).forEach((answer) => {
         if (!validator.isEmpty(answer) && !blank.selectableAnswer) {
           errors.push({
-            message: `[Fill-in-the-blanks section error] Blank ${
-              index + 1
-            } is not a selectable answer therefore should not have incorrect answers to choose from`,
+            message: `[Fill-in-the-blanks section error] Blank ${index + 1
+              } is not a selectable answer therefore should not have incorrect answers to choose from`,
           });
         }
       });
@@ -573,9 +567,8 @@ const validateTest = async (
         blank.selectableAnswer
       ) {
         errors.push({
-          message: `[Fill-in-the-blanks section error] Blank ${
-            index + 1
-          } is a selectable answer therefore you must make at least 1 incorrect answer to choose from`,
+          message: `[Fill-in-the-blanks section error] Blank ${index + 1
+            } is a selectable answer therefore you must make at least 1 incorrect answer to choose from`,
         });
       }
       const duplicateIncorrectAnswers = checkDuplicates(
@@ -586,9 +579,8 @@ const validateTest = async (
         blank.selectableAnswer
       ) {
         errors.push({
-          message: `[Fill-in-the-blanks section error] Blank ${
-            index + 1
-          } has duplicate incorrect answers`,
+          message: `[Fill-in-the-blanks section error] Blank ${index + 1
+            } has duplicate incorrect answers`,
         });
       }
       if (
@@ -596,9 +588,8 @@ const validateTest = async (
         blank.selectableAnswer
       ) {
         errors.push({
-          message: `[Fill-in-the-blanks section error] Blank ${
-            index + 1
-          } has an incorrect answer that is the same as the correct answer`,
+          message: `[Fill-in-the-blanks section error] Blank ${index + 1
+            } has an incorrect answer that is the same as the correct answer`,
         });
       }
     });

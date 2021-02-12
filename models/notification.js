@@ -70,12 +70,11 @@ const notificationSchema = new Schema(
   }
 );
 
-notificationSchema.index(
-  { createdAt: 1 },
-  { expireAfterSeconds: 3 * 24 * 60 * 60 }, //remove document after 3 days
-  { unique: true }
-);
+// notificationSchema.index(
+//   { createdAt: 1 },
+//   { expireAfterSeconds: 3 * 24 * 60 * 60 }, //remove document after 3 days
+//   { unique: true }
+// );
 
-// notificationSchema.index({expireAt: 1},{expireAfterSeconds: 0});
 
 module.exports = mongoose.model("Notification", notificationSchema);
