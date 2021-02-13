@@ -164,6 +164,7 @@ module.exports = {
       testType: xss(testInput.testType, noHtmlTags),
       weight: testInput.testWeight,
       timer: testInput.timer,
+      isGradeIncluded:testInput.isGradeIncluded,
       gradeReleaseDate: testInput.gradeReleaseDate,
       availableOnDate: testInput.availableOnDate,
       dueDate: testInput.dueDate,
@@ -503,6 +504,7 @@ module.exports = {
     test.availableOnDate = testInput.availableOnDate;
     test.dueDate = testInput.dueDate;
     test.gradeReleaseDate = testInput.gradeReleaseDate;
+    test.isGradeIncluded = testInput.isGradeIncluded;
     test.allowLateSubmission = testInput.allowLateSubmission;
     test.lateDaysAllowed = testInput.lateDaysAllowed;
     test.latePenalty = testInput.latePenalty;

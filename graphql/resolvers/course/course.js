@@ -631,7 +631,7 @@ module.exports = {
             ).getTime();
             const isGradeReleaseDate =
               Date.now() > gradeReleaseDate || !gradeReleaseDate;
-            const foundResult = await Result.findOne({
+            const isClosedTestResult = await Result.findOne({
               student: req.userId,
               test: test._id,
               closed: true,
@@ -648,7 +648,7 @@ module.exports = {
                 text: "",
                 blanks: fixedFillInBlanksQuestions,
               },
-              completed: foundResult ? true : false,
+              completed: isClosedTestResult ? true : false,
             };
           });
         const fixedLessons = await Promise.all(
@@ -761,6 +761,13 @@ module.exports = {
           ) ||
           !course.courseActive
         ) {
+          const totalNumberOfTests = course.tests.length;
+          const numberOfExcusedTests = await Result.countDocuments({
+            student: req.userId,
+            isExcused: true,
+          });
+          console.log('numberOfExcusedTests',numberOfExcusedTests)
+          console.log('totalNumberOfTests',totalNumberOfTests)
           return {
             ...course._doc,
             _id: course._id.toString(),
@@ -789,6 +796,7 @@ module.exports = {
                   !r.approved &&
                   !r.droppedOut
               ) > -1,
+            totalIncludedTests:totalNumberOfTests - numberOfExcusedTests,
             completed: (student.completedCourses || []).includes(
               course._id.toString()
             ),
@@ -816,6 +824,7 @@ module.exports = {
           passed: courseResult.passed,
           enrolled: true,
           enrollmentRequested: false,
+          
           completed: (student.completedCourses || []).includes(
             course._id.toString()
           ),

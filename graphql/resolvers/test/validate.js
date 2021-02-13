@@ -49,6 +49,9 @@ const validateTest = async (
   if (!validator.isBoolean(testInput.published + "")) {
     errors.push({ message: "Published must be true or false" });
   }
+  if (!validator.isBoolean(testInput.isGradeIncluded + "")) {
+    errors.push({ message: "Graded included must be true or false" });
+  }
   if (!validator.isAlphanumeric(testInput.instructor)) {
     errors.push({ message: "Instructor must be an alpha numeric id" });
   }
@@ -67,14 +70,23 @@ const validateTest = async (
   ) {
     errors.push({ message: "There can only be 1 final exam" });
   }
-  if (
-    !validator.isFloat(testInput.testWeight + "") ||
-    !(testInput.testWeight > 0) ||
-    !(testInput.testWeight <= 1000)
+
+  if (testInput.isGradeIncluded &&
+    (!validator.isFloat(testInput.testWeight + "") ||
+      !(testInput.testWeight > 0) ||
+      !(testInput.testWeight <= 1000))
   ) {
     errors.push({
       message:
         "Test weight must be a positive float, less then or equal to 1000",
+    });
+  }
+  if (!testInput.isGradeIncluded &&
+    !(testInput.testWeight === 0)
+  ) {
+    errors.push({
+      message:
+        "Test weight must be 0 if test is excluded from course grade",
     });
   }
   if (testInput.passingGrade) {

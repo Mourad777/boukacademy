@@ -16,6 +16,7 @@ module.exports = buildSchema(`
         testType: String
         weight: Float!
         timer: Int
+        isGradeIncluded: Boolean!
         passingGrade:Float
         passingRequired:Boolean
         gradeReleaseDate: String
@@ -109,6 +110,7 @@ module.exports = buildSchema(`
         testType: String
         testWeight: Float!
         timer: Int
+        isGradeIncluded: Boolean!
         passingGrade: Float
         passingRequired: Boolean
         availableOnDate: String

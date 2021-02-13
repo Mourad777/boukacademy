@@ -221,6 +221,7 @@ module.exports = buildSchema(`
         irregularOfficeHours: [OfficeHourDate]
         createdAt: String
         completed:Boolean
+        totalIncludedTests: Int
         studentGrades:[StudentGrade!]!
         resources:[Resource]
     }

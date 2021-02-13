@@ -1,21 +1,12 @@
 const express = require("express");
-const cluster = require("cluster");
-const net = require("net");
-const sio_redis = require("socket.io-redis");
-const farmhash = require("farmhash");
-const cors = require("cors");
 const multer = require("multer");
 const bodyParser = require("body-parser");
 const port = process.env.PORT || 8080;
-const num_processes = require("os").cpus().length;
 const app = express();
 const redis = require("redis");
 const client = redis.createClient(process.env.REDIS_URL);
 const path = require("path");
 const Instructor = require("./models/instructor");
-const { i18n } = require("./i18n.config");
-const moment = require("moment");
-const momentTZ = require("moment-timezone");
 //24759
 const {
   onNotifyOfDocUpdate,
@@ -30,9 +21,7 @@ const {
   onDisconnect,
   onReconnect,
 } = require("./sockets/listeners");
-// app.use(cors())
-// Here you might use middleware, attach routes, etc.
-//console.log
+
 const graphqlSchema = require("./graphql/schemas/index");
 const graphqlResolver = require("./graphql/resolvers/index");
 const graphqlHttp = require("express-graphql");
@@ -47,15 +36,14 @@ require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
 
+
+const Result = require('./models/result')
+const Test = require('./models/test')
+
 const multerUpload = multer().any();
 
 app.use(multerUpload);
 app.use(bodyParser.json());
-
-var corsOptions = {
-  origin: "https://learn-f648e.web.app",
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -70,15 +58,6 @@ app.use((req, res, next) => {
   next();
 });
 app.use(auth);
-
-// const buildXMLTagSet = (tagset: Record<string, string>): string => {
-//   const tags = Object.entries(tagset).reduce(
-//     (acc, [key, value]) => `${acc}<Tag><Key>${key}</Key><Value>${value}</Value></Tag>`,
-//     '',
-//   );
-
-//   return `<Tagging><TagSet>${tags}</TagSet></Tagging>`;
-// };
 
 app.put("/upload", async (req, res, next) => {
   if (!req.instructorIsAuth && !req.studentIsAuth) {
@@ -128,12 +107,8 @@ app.put("/upload", async (req, res, next) => {
     Expires: 300, //seconds
     Conditions: [
       ["content-length-range", 0, maxFileSize], //100mb
-      // ["starts-with", "$x-amz-meta-filetype", ""],
-      // ["starts-with", "$x-amz-tagging", ""],
       ["starts-with", "$tagging", ""],
-      // ['starts-with', '$Content-Type', 'image/'],
     ],
-    // ContentType:'image'
   };
   const tagKey = 'fileType';
   const tagValue = fileType;
@@ -148,7 +123,6 @@ app.put("/upload", async (req, res, next) => {
           },
         },
       });
-      // resolve(data);
     });
 });
 
@@ -227,8 +201,11 @@ mongoose
       useCreateIndex: true,
     }
   )
-  .then((result) => {
+  .then(async (result) => {
     console.log("connected to mongoose");
+
+    // await Result.updateMany({},{isExcused:false})
+    // await Test.updateMany({},{isGradeIncluded:true})
     // Don't expose our internal server to the outside.
     const expressServer = app.listen(port);
     const io = require("./socket").init(expressServer);

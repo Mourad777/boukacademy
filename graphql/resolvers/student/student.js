@@ -19,7 +19,7 @@ const { updateUrls } = require("../../../util/getUpdatedUrls");
 const { updateResultUrls } = require("../../../util/updateResultUrls");
 const { getObjectUrl } = require("../../../s3");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-
+//closetest
 module.exports = {
   testResults: async function ({ }, req) {
     if (!req.studentIsAuth) {
@@ -364,6 +364,7 @@ module.exports = {
       test: testId,
       grade: 0,
       graded: false,
+      isExcused:false,
       gradeOverride: false,
       gradingInProgress: false,
       closed: false,
@@ -928,7 +929,7 @@ module.exports = {
     return "test submitted successfully!";
   },
 
-  closeTest: async function ({ test, student }, req) {
+  closeTest: async function ({ test, student, isExcused }, req) {
     if (!req.instructorIsAuth) {
       const error = new Error("No instructor logged in!");
       error.code = 401;
@@ -1017,7 +1018,8 @@ module.exports = {
       const result = new Result({
         student: student,
         course: instructorTest.course,
-        graded: false,
+        graded:  isExcused ? true : false,
+        isExcused,
         grade: 0,
         test: test,
         gradingInProgress: false,
@@ -1043,12 +1045,16 @@ module.exports = {
       await studentToUpdate.save();
       result.closed = true;
       result.graded = false;
+      if(isExcused){
+        result.isExcused = true;
+        result.graded = true;
+      }
       await result.save();
       io.getIO().emit("mainMenu", {
         userId: student,
         testId: test,
-        action: "closeTest",
-        message: "The instructor closed the test",
+        action:isExcused ? "excuseTest" : "closeTest",
+        message:isExcused ? "The instructor excused the test" : "The instructor closed the test",
       });
 
       return result;

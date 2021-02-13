@@ -16,6 +16,7 @@ module.exports = buildSchema(`
         testType: String
         weight: Float!
         timer: Int
+        isGradeIncluded: Boolean!
         notes: String
         availableOnDate: String
         dueDate: String
@@ -192,6 +193,7 @@ module.exports = buildSchema(`
         closed: Boolean!
         latePenalty: Float
         grade: Float
+        isExcused: Boolean!
         gradeOverride: Boolean!
         gradeAdjustmentExplanation: String
         graded: Boolean!
@@ -248,7 +250,7 @@ module.exports = buildSchema(`
             speakingAnswersInput: [SpeakingAnswersInput]
             fillBlankAnswersInput: [FillBlankAnswersInput]
             ):String
-        closeTest(test:ID!,student:ID!):TestResult
+        closeTest(test:ID!,student:ID!, isExcused:Boolean!):TestResult
     }
     
     schema {

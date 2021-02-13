@@ -60,6 +60,10 @@ const testSchema = new Schema({
     type: Boolean,
     required: false,
   },
+  isGradeIncluded: {
+    type: Boolean,
+    required: true,
+  },
   passingGrade: {
     type: Number,
     required: false,

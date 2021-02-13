@@ -22,6 +22,10 @@ const resultSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    isExcused:{
+      type:Boolean,
+      required:true,
+    },
     grade: {
       type: Number,
       required: false,
