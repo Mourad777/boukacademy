@@ -1014,6 +1014,24 @@ module.exports = {
     //update class average
 
     //if test is closed update class average
+
+
+
+    if(isExcused){
+      await sendEmailToOneUser({
+        userId: student,
+        course:foundCourse._id,
+        subject: "workExcusedSubject",
+        content: "workExcused",
+        student,
+        condition: instructorTest.assignment ? "isAssignmentEmails" : "isTestEmails",
+        userType: "student",
+        test,
+        // message,
+      });
+    }
+
+
     if (!result) {
       const result = new Result({
         student: student,
@@ -1050,12 +1068,14 @@ module.exports = {
         result.graded = true;
       }
       await result.save();
+      
       io.getIO().emit("mainMenu", {
         userId: student,
         testId: test,
         action:isExcused ? "excuseTest" : "closeTest",
         message:isExcused ? "The instructor excused the test" : "The instructor closed the test",
       });
+      //if test is excused email the student
 
       return result;
     }
