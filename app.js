@@ -204,8 +204,8 @@ mongoose
   .then(async (result) => {
     console.log("connected to mongoose");
 
-    await Result.updateMany({},{isExcused:false})
-    await Test.updateMany({},{isGradeIncluded:true})
+    // await Result.updateMany({},{isExcused:false})
+    // await Test.updateMany({},{isGradeIncluded:true})
     // Don't expose our internal server to the outside.
     const expressServer = app.listen(port);
     const io = require("./socket").init(expressServer);
