@@ -77,6 +77,8 @@ module.exports = {
       Date.now() > lessonReleaseDate || !lessonReleaseDate;
     if (!isLessonReleaseDate && lessonReleaseDate)
       content = ["newLessonLaterDate"]
+
+
     const notification = new Notification({
       toUserType: "student",
       fromUser: req.userId,
@@ -97,7 +99,7 @@ module.exports = {
     const createdLesson = await lesson.save();
     course.lessons.push(createdLesson._id);
     await course.save();
-    await notification.save();
+    if (instructorConfig.isSendLessonNotifications) await notification.save();
     const isSendEmails = instructorConfig.isSendLessonEmails;
     if (isSendEmails) {
       let content = "newLesson";
@@ -112,15 +114,17 @@ module.exports = {
           return rq.student;
         }
       });
-      await sendEmailsToStudents({
-        studentIdsEnrolled,
-        course,
-        content,
-        subject,
-        date,
-        lesson: createdLesson,
-        condition: 'isLessonEmails'
-      });
+
+        await sendEmailsToStudents({
+          studentIdsEnrolled,
+          course,
+          content,
+          subject,
+          date,
+          lesson: createdLesson,
+          condition: 'isLessonEmails'
+        });
+      
     }
 
     io.getIO().emit("updateCourses", {
@@ -233,10 +237,6 @@ module.exports = {
 
     const isReleaseDateChanged = (lessonReleaseDate || '').toString() !== (oldDessonReleaseDate || '').toString();
 
-    await Notification.findOneAndDelete({
-      documentId: lesson._id,
-      documentType: "lesson",
-    });
     let content = ["lessonUpdated"]
     if (!isLessonReleaseDate && lessonReleaseDate && isReleaseDateChanged)
       content = ["lessonUpdatedDateChanged"]
@@ -248,26 +248,34 @@ module.exports = {
         content = ["newLessonLaterDate"]
     }
 
-    let notification;
-    if (lessonInput.published) {
-      notification = new Notification({
-        toUserType: "student",
-        course: lessonInput.course,
-        content,
-        documentType: "lesson",
-        documentId: lesson._id,
-        fromUser: req.userId,
-      });
-    } else {
+    if (instructorConfig.isSendLessonNotifications) {
+      let notification;
       await Notification.findOneAndDelete({
         documentId: lesson._id,
         documentType: "lesson",
       });
+
+      if (lessonInput.published) {
+        notification = new Notification({
+          toUserType: "student",
+          course: lessonInput.course,
+          content,
+          documentType: "lesson",
+          documentId: lesson._id,
+          fromUser: req.userId,
+        });
+      } else {
+        await Notification.findOneAndDelete({
+          documentId: lesson._id,
+          documentType: "lesson",
+        });
+      }
+      if (notification) await notification.save();
+
     }
-    if (notification) await notification.save();
 
     const isSendEmails = instructorConfig.isSendLessonEmails;
-    if (isSendEmails  && lessonInput.published) {
+    if (isSendEmails && lessonInput.published) {
       let content = "lessonUpdated";
       let subject = "lessonUpdatedSubject";
 

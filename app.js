@@ -217,7 +217,7 @@ mongoose
     // Here you might use Socket.IO middleware for authorization etc.
     io.use(socketAuth);
     io.on("connection", function (socket) {
-      console.log("New client connected");
+      // console.log("New client connected");
       onNotifyOfDocUpdate(socket);
       onLoggedIn(socket); //fired when user logs in
       onActive(socket); //fired when user activity

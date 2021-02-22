@@ -47,6 +47,8 @@
   "workReset":"El profesor reinició la {{testOrAssignment}} {{workName}}. {{message}}",
   "workResetCanTakeAgain":"El profesor reinició la {{testOrAssignment}} {{workName}}. El progreso o la calificación se ha eliminado y puede volver a tomarlo",
   "workResetSubject": "La {{testOrAssignment}} se reinició",
+  "workExcusedSubject": "Su {{testOrAssignment}} ha sido perdonada",
+	"workExcused": "Su {{testOrAssignment}} {{workName}} ha sido perdonada y no se incluirá en la calificación final.",
 
   "workSubmitted": "{{firstName}} presentó una {{testOrAssignment}}",
   "workSubmittedSubject": "Se presentó una {{testOrAssignment}}",

@@ -6,7 +6,7 @@ const Course = require("../../../models/course");
 const Configuration = require("../../../models/configuration");
 
 module.exports = {
-  notifications: async function ({}, req) {
+  notifications: async function ({ }, req) {
     if (!req.instructorIsAuth && !req.studentIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 403;
@@ -22,7 +22,7 @@ module.exports = {
         notifications.filter(
           (n) =>
             n.toUserType ===
-              `${req.studentIsAuth ? "student" : "instructor"}` ||
+            `${req.studentIsAuth ? "student" : "instructor"}` ||
             n.userType === "all" ||
             (n.toSpecificUser || "").toString() === req.userId
         ) || []
@@ -53,6 +53,12 @@ module.exports = {
               !configuration.isTestNotifications) ||
             (n.documentType === "assignmentSubmitted" &&
               !configuration.isAssignmentNotifications) ||
+
+            (n.documentType === "testExcused" &&
+              !configuration.isTestNotifications) ||
+            (n.documentType === "assignmentExcused" &&
+              !configuration.isAssignmentNotifications) ||
+
             (n.documentType === "courseEnrollRequest" &&
               !configuration.isEnrollNotifications) ||
             (n.documentType === "courseEnrollDeny" &&

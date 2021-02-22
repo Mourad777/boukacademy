@@ -2,7 +2,7 @@ const Configuration = require("../../../models/configuration");
 const Course = require("../../../models/course");
 const io = require("../../../socket");
 const Instructor = require("../../../models/instructor");
-
+const {validateConfiguration} = require("./validate")
 module.exports = {
   configuration: async function ({}, req) {
     let userType;
@@ -83,6 +83,15 @@ module.exports = {
     if (!config) {
       const error = new Error("No config found");
       error.code = 401;
+      throw error;
+    }
+
+    const errors = validateConfiguration(configurationInput,userType,user.admin);
+    console.log('errors: ',errors)
+    if (errors.length > 0) {
+      const error = new Error("Invalid input.");
+      error.data = errors;
+      error.code = 422;
       throw error;
     }
 
@@ -195,10 +204,10 @@ module.exports = {
         configurationInput.isNewInstructorAccountEmails;
       config.isNewInstructorAccountNotifications =
         configurationInput.isNewInstructorAccountNotifications;
-      config.isAllowDeleteStudentAccount =
-        configurationInput.isAllowDeleteStudentAccount;
-      config.isAllowDeleteInstructorAccount =
-        configurationInput.isAllowDeleteInstructorAccount;
+      // config.isAllowDeleteStudentAccount =
+      //   configurationInput.isAllowDeleteStudentAccount;
+      // config.isAllowDeleteInstructorAccount =
+      //   configurationInput.isAllowDeleteInstructorAccount;
 
       config.isHideActiveStatus = configurationInput.isHideActiveStatus;
 

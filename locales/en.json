@@ -46,6 +46,8 @@
 	"workUpdatedSubject": "The {{testOrAssignment}} {{workName}} was updated ",
 	"workReset": "The instructor reset the {{testOrAssignment}} {{workName}}. {{message}}",
 	"workResetCanTakeAgain": "The instructor reset the {{testOrAssignment}} {{workName}}. The progress or grade has been deleted and you can take it again.",
+	"workExcusedSubject": "Your {{testOrAssignment}} has been excused",
+	"workExcused": "Your {{testOrAssignment}} {{workName}} has been excused and will not be included in the final grade.",
 	"workResetSubject": "The {{testOrAssignment}} was reset",
 	"workSubmitted": "{{firstName}} submitted {{aOrAn}} {{testOrAssignment}}",
 	"workSubmittedSubject": "A student submitted {{aOrAn}} {{testOrAssignment}}",

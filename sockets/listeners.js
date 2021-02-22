@@ -386,7 +386,7 @@ const onReconnect = (socket) => {
 const onDisconnect = (socket) => {
   const user = socket.userId;
   socket.on("disconnect", function () {
-    console.log("disconnecting", socket.id);
+    // console.log("disconnecting", socket.id);
     try {
       // if (user) client.del(`user[${user}]`);
     } catch (e) {

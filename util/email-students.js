@@ -182,7 +182,6 @@ const sendEmailsToStudents = async ({
             workName:test.testName
           }),
           html: `
-            <p>to:${student.firstName}</p>
             ${
               Array.isArray(content)
                 ? 

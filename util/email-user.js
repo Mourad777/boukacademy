@@ -25,9 +25,10 @@ const sendEmailToOneUser = async ({
   if (isRecieveEmails) {
     i18n.setLocale(language);
     let passOrFail = passed ? i18n.__("passed") : i18n.__("failed");
-    if(test && !test.passingGrade){
-      passOrFail = ''
-    }
+    // if(test && !test.passingGrade){
+    //   console.log('yes')
+    //   passOrFail = ''
+    // }
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: user.email,
@@ -39,7 +40,6 @@ const sendEmailToOneUser = async ({
           aOrAn:test.assignment ? 'an' : 'a',
       }),
       html: `
-            <p>to:${student.firstName} not always to student</p>
             <h2 style="font-family:sans-serif;font-weight:400;color:black;">${i18n.__(
               content,
               {

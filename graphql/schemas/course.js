@@ -200,6 +200,7 @@ module.exports = buildSchema(`
         enrolled:Boolean
         grade:Float
         passed:Boolean
+        droppedOut:Boolean
         accessDenied:Boolean
         enrollmentRequested:Boolean
         studentCapacity: Int

@@ -341,6 +341,8 @@ const validateCourse = async (courseInput, req) => {
 
 const validateFinalGrade = async (finalGradeInput) => {
   const errors = [];
+  const isDropCoursePenalty = finalGradeInput.isDropCoursePenalty;
+  const dropCourseGrade = finalGradeInput.dropCourseGrade;
   if (
     finalGradeInput.grade &&
     (!validator.isFloat(finalGradeInput.grade + "") ||
@@ -348,6 +350,9 @@ const validateFinalGrade = async (finalGradeInput) => {
       !(finalGradeInput.grade <= 100))
   ) {
     errors.push({ message: "Grade must be a Float between 0 and 100" });
+  }
+  if(isDropCoursePenalty && finalGradeInput.grade < dropCourseGrade){
+    errors.push({ message: `The final grade cannot be less than the minimum grade which is ${dropCourseGrade}%` });
   }
   if (!validator.isBoolean(finalGradeInput.gradeOverride + "")) {
     errors.push({ message: "Grade override must be true or false" });

@@ -19,6 +19,7 @@ const { updateUrls } = require("../../../util/getUpdatedUrls");
 const { updateResultUrls } = require("../../../util/updateResultUrls");
 const { getObjectUrl } = require("../../../s3");
 const { sendEmailToOneUser } = require("../../../util/email-user");
+const { updateClassAverage } = require("../../../util/updateClassAverage");
 //closetest
 module.exports = {
   testResults: async function ({ }, req) {
@@ -514,7 +515,7 @@ module.exports = {
       error.code = 404;
       throw error;
     }
-
+    const isSendNotifications = (instructorConfig.isSendTestNotifications && !test.assignment) || (instructorConfig.isSendAssignmentNotifications && test.assignment)
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
 
@@ -772,7 +773,7 @@ module.exports = {
       let content;
       let gradedSubject;
       if (graded) {
-        await Notification.findOneAndDelete({
+      if(isSendNotifications) await Notification.findOneAndDelete({
           documentId: test._id,
           toSpecificUser: studentId,
         });
@@ -820,18 +821,10 @@ module.exports = {
       result.speakingSection = speakingSection;
       result.fillInBlanksSection = fillInBlanksSection;
       await result.save();
-      if (content) await notification.save();
+      if (content && isSendNotifications) await notification.save();
       //update test class average
-      const allResults = await Result.find({
-        test: test._id,
-        graded: true,
-        closed: true,
-      });
-      const gradeSum = allResults.reduce((prev, curr) => prev + curr.grade, 0);
-      const classAverage = parseFloat(
-        (gradeSum / allResults.length).toFixed(2)
-      );
-      test.classAverage = classAverage;
+
+      test.classAverage = await updateClassAverage(test)
       if (graded) await test.save();
       if (
         ((isSendTestEmails && !test.assignment) ||
@@ -948,6 +941,16 @@ module.exports = {
       error.code = 401;
       throw error;
     }
+    const instructorConfig = await Configuration.findOne({
+      user: req.userId,
+    });
+    if (!instructorConfig) {
+      const error = new Error("No configuration found!");
+      error.code = 404;
+      throw error;
+    }
+
+    const isSendNotifications = (instructorConfig.isSendTestNotifications && !instructorTest.assignment) || (instructorConfig.isSendAssignmentNotifications && instructorTest.assignment)
 
     const result = await Result.findOne({ test: test, student });
 
@@ -1018,15 +1021,26 @@ module.exports = {
 
 
     if(isExcused){
+      const notification = new Notification({
+        toUserType: "unique",
+        toSpecificUser: student,
+        fromUser: req.userId,
+        content: ["workExcused"],
+        documentType: test.assignment ? "assignmentExcused" : "testExcused",
+        documentId: test,
+        course: instructorTest.course,
+      });
+      if(isSendNotifications) notification.save();
+
       await sendEmailToOneUser({
         userId: student,
-        course:foundCourse._id,
+        course:foundCourse,
         subject: "workExcusedSubject",
         content: "workExcused",
-        student,
+        student:studentToUpdate,
         condition: instructorTest.assignment ? "isAssignmentEmails" : "isTestEmails",
         userType: "student",
-        test,
+        test:instructorTest,
         // message,
       });
     }
@@ -1036,7 +1050,7 @@ module.exports = {
       const result = new Result({
         student: student,
         course: instructorTest.course,
-        graded:  isExcused ? true : false,
+        graded: false,
         isExcused,
         grade: 0,
         test: test,
@@ -1065,10 +1079,25 @@ module.exports = {
       result.graded = false;
       if(isExcused){
         result.isExcused = true;
-        result.graded = true;
+        // result.graded = true;
+
+        //to update progress report in real-time for student
+        io.getIO().emit("updateResults", {
+          userType: "student",
+          userId: student,
+        });
+        //to update progress report in real-time for instructor
+        io.getIO().emit("updateCourses", {
+          //to update the class average
+          userType: "all",
+          courseId: foundCourse._id,
+          enrollmentRequired: true,
+        });
       }
       await result.save();
-      
+      const ave = await updateClassAverage(instructorTest)
+      instructorTest.classAverage = Number.isNaN(ave) ? 0 : ave;
+      if(!isExcused) await instructorTest.save(); 
       io.getIO().emit("mainMenu", {
         userId: student,
         testId: test,
@@ -1076,7 +1105,6 @@ module.exports = {
         message:isExcused ? "The instructor excused the test" : "The instructor closed the test",
       });
       //if test is excused email the student
-
       return result;
     }
     //testresults

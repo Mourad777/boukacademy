@@ -284,12 +284,7 @@ const validateTest = async (
       message: "Grade release date should be after the due date",
     });
   }
-  console.log('testInput.allowLateSubmission', testInput.allowLateSubmission)
-  console.log('gradeRelease', gradeRelease)
-  console.log('dueOn', dueOn)
-  console.log('(dueOn + 86,400,000 * testInput.lateDaysAllowed)', (dueOn + 86400000 * testInput.lateDaysAllowed))
-  console.log('testInput.lateDaysAllowed', testInput.lateDaysAllowed)
-  console.log('dueOn + 86,400,000 * testInput.lateDaysAllowed)  < gradeRelease', (dueOn + 86400000 * testInput.lateDaysAllowed) < gradeRelease)
+  
   if (!((dueOn + 86400000 * testInput.lateDaysAllowed) < gradeRelease) && gradeRelease && dueOn && testInput.allowLateSubmission) {
     errors.push({
       message: "Grade release date should be after the due date plus the number of late days allowed",

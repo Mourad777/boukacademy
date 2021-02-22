@@ -19,7 +19,8 @@ const {
 const moment = require("moment");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-
+const { updateClassAverage } = require("../../../util/updateClassAverage");
+//reset
 module.exports = {
   createTest: async function (
     {
@@ -31,6 +32,7 @@ module.exports = {
     },
     req
   ) {
+    console.log('creating test')
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -164,7 +166,7 @@ module.exports = {
       testType: xss(testInput.testType, noHtmlTags),
       weight: testInput.testWeight,
       timer: testInput.timer,
-      isGradeIncluded:testInput.isGradeIncluded,
+      isGradeIncluded: testInput.isGradeIncluded,
       gradeReleaseDate: testInput.gradeReleaseDate,
       availableOnDate: testInput.availableOnDate,
       dueDate: testInput.dueDate,
@@ -194,20 +196,20 @@ module.exports = {
     const createdTest = await test.save();
     course.tests.push(createdTest);
     await course.save();
-
-    let newNotification;
-    if (testInput.published) {
-      const notification = new Notification({
-        toUserType: "student",
-        fromUser: req.userId,
-        content: ["newWorkPosted"],
-        documentType: test.assignment ? "assignment" : "test",
-        documentId: test._id,
-        course: testInput.course,
-      });
-      newNotification = await notification.save();
+    const isSendNotifications = (instructorConfig.isSendTestNotifications && !testInput.assignment) || (instructorConfig.isSendAssignmentNotifications && testInput.assignment)
+    if (isSendNotifications) {
+      if (testInput.published) {
+        const notification = new Notification({
+          toUserType: "student",
+          fromUser: req.userId,
+          content: ["newWorkPosted"],
+          documentType: test.assignment ? "assignment" : "test",
+          documentId: test._id,
+          course: testInput.course,
+        });
+        await notification.save();
+      }
     }
-
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
     if (testInput.published) {
@@ -256,6 +258,7 @@ module.exports = {
     },
     req
   ) {
+    console.log('updating test')
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -473,7 +476,9 @@ module.exports = {
       (test.latePenalty || "").toString()
     )
       content.push("assignmentDailyPenaltyChanged");
-    if ((content.length > 0 || testPostedContent) && testInput.published) {
+
+    const isSendNotifications = (instructorConfig.isSendTestNotifications && !testInput.assignment) || (instructorConfig.isSendAssignmentNotifications && testInput.assignment)
+    if ((content.length > 0 || testPostedContent) && testInput.published && isSendNotifications) {
       //if test is switched to published, notify students
       await Notification.findOneAndDelete({
         documentId: test._id,
@@ -529,8 +534,11 @@ module.exports = {
     test.blockedNotes = testInput.blockedNotes;
     test.notes = xss(testInput.notes, noHtmlTags);
     const updatedTest = await test.save();
-    if ((testPostedContent || content.length > 0) && notification) {
-      await notification.save();
+    console.log('switches: ',(testPostedContent || content.length > 0),notification,isSendNotifications)
+    if ((testPostedContent || content.length > 0) && notification && isSendNotifications) {
+      console.log('saving notif')
+     const result = await notification.save();
+     console.log('result',result)
     }
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
@@ -549,7 +557,7 @@ module.exports = {
         studentIdsEnrolled,
         course,
         content: testPostedContent ? "newWorkPosted" : content,
-        subject:testPostedContent ? "newWorkPosted" : subject,
+        subject: testPostedContent ? "newWorkPosted" : subject,
         date: test.availableOnDate,
         dateSecondary: test.dueDate,
         test: updatedTest,
@@ -840,6 +848,7 @@ module.exports = {
       error.code = 404;
       throw error;
     }
+    const isSendNotifications = (instructorConfig.isSendTestNotifications && !test.assignment) || (instructorConfig.isSendAssignmentNotifications && test.assignment)
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
     const student = await Student.findById(studentId);
@@ -892,7 +901,7 @@ module.exports = {
       const resultDirectory = `courses/${test.course}/tests/${testId}/results/${result._id}`;
       await emptyS3Directory(resultDirectory);
       await student.save();
-      await notification.save();
+      if(isSendNotifications)await notification.save();
 
       //9. email student
       if (
@@ -911,6 +920,11 @@ module.exports = {
           message,
         });
       }
+      const ave = await updateClassAverage(test)
+      console.log('ave: ',ave)
+      test.classAverage = Number.isNaN(ave) ? 0 : ave;
+      await test.save();
+
       //10. notify student in real-time
       io.getIO().emit("mainMenu", {
         //to exit test if test is in session
@@ -996,7 +1010,8 @@ module.exports = {
       documentId: test._id,
       course: test.course,
     });
-    await notification.save();
+    console.log('isSendNotifications',isSendNotifications)
+    if(isSendNotifications) await notification.save();
 
     await emptyS3Directory(resultDirectory);
 
@@ -1018,6 +1033,10 @@ module.exports = {
         condition: test.assignment ? "isAssignmentEmails" : "isTestEmails",
       });
     }
+    
+    test.classAverage = 0
+    await test.save();
+
     io.getIO().emit("mainMenu", {
       //to exit test if test is in session
       userType: "student",
@@ -1030,6 +1049,8 @@ module.exports = {
       userType: "student",
       id: studentId,
     });
+
+    //reset class average in test document
     return true;
   },
 };
