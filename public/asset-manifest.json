@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.4e914fa3.chunk.css",
-    "main.js": "/static/js/main.78e81ade.chunk.js",
+    "main.js": "/static/js/main.b07cd26d.chunk.js",
     "runtime-main.js": "/static/js/runtime-main.0a1904fc.js",
     "static/css/2.ec791c05.chunk.css": "/static/css/2.ec791c05.chunk.css",
     "static/js/2.1dec2c7b.chunk.js": "/static/js/2.1dec2c7b.chunk.js",
@@ -10,7 +10,7 @@
     "e60b15daa51dd5ca873c.worker.js": "/e60b15daa51dd5ca873c.worker.js",
     "e60b15daa51dd5ca873c.worker.js.LICENSE.txt": "/e60b15daa51dd5ca873c.worker.js.LICENSE.txt",
     "index.html": "/index.html",
-    "precache-manifest.a4714685c704173ee64e4a2bb92d4d75.js": "/precache-manifest.a4714685c704173ee64e4a2bb92d4d75.js",
+    "precache-manifest.20cfb5e765e40b2b68e9c2c5485c0844.js": "/precache-manifest.20cfb5e765e40b2b68e9c2c5485c0844.js",
     "service-worker.js": "/service-worker.js",
     "static/js/2.1dec2c7b.chunk.js.LICENSE.txt": "/static/js/2.1dec2c7b.chunk.js.LICENSE.txt",
     "static/media/course-default.png": "/static/media/course-default.8bddad59.png",
@@ -21,6 +21,6 @@
     "static/css/2.ec791c05.chunk.css",
     "static/js/2.1dec2c7b.chunk.js",
     "static/css/main.4e914fa3.chunk.css",
-    "static/js/main.78e81ade.chunk.js"
+    "static/js/main.b07cd26d.chunk.js"
   ]
 }
