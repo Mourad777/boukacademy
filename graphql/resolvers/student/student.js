@@ -1026,7 +1026,7 @@ module.exports = {
         toSpecificUser: student,
         fromUser: req.userId,
         content: ["workExcused"],
-        documentType: test.assignment ? "assignmentExcused" : "testExcused",
+        documentType: instructorTest.assignment ? "assignmentExcused" : "testExcused",
         documentId: test,
         course: instructorTest.course,
       });
