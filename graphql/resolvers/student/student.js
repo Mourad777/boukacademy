@@ -365,7 +365,7 @@ module.exports = {
       test: testId,
       grade: 0,
       graded: false,
-      isExcused:false,
+      isExcused: false,
       gradeOverride: false,
       gradingInProgress: false,
       closed: false,
@@ -773,7 +773,7 @@ module.exports = {
       let content;
       let gradedSubject;
       if (graded) {
-      if(isSendNotifications) await Notification.findOneAndDelete({
+        if (isSendNotifications) await Notification.findOneAndDelete({
           documentId: test._id,
           toSpecificUser: studentId,
         });
@@ -1020,7 +1020,7 @@ module.exports = {
 
 
 
-    if(isExcused){
+    if (isExcused) {
       const notification = new Notification({
         toUserType: "unique",
         toSpecificUser: student,
@@ -1030,17 +1030,17 @@ module.exports = {
         documentId: test,
         course: instructorTest.course,
       });
-      if(isSendNotifications) notification.save();
+      if (isSendNotifications) notification.save();
 
       await sendEmailToOneUser({
         userId: student,
-        course:foundCourse,
+        course: foundCourse,
         subject: "workExcusedSubject",
         content: "workExcused",
-        student:studentToUpdate,
+        student: studentToUpdate,
         condition: instructorTest.assignment ? "isAssignmentEmails" : "isTestEmails",
         userType: "student",
-        test:instructorTest,
+        test: instructorTest,
         // message,
       });
     }
@@ -1077,7 +1077,7 @@ module.exports = {
       await studentToUpdate.save();
       result.closed = true;
       result.graded = false;
-      if(isExcused){
+      if (isExcused) {
         result.isExcused = true;
         // result.graded = true;
 
@@ -1097,12 +1097,12 @@ module.exports = {
       await result.save();
       const ave = await updateClassAverage(instructorTest)
       instructorTest.classAverage = Number.isNaN(ave) ? 0 : ave;
-      if(!isExcused) await instructorTest.save(); 
+      if (!isExcused) await instructorTest.save();
       io.getIO().emit("mainMenu", {
         userId: student,
         testId: test,
-        action:isExcused ? "excuseTest" : "closeTest",
-        message:isExcused ? "The instructor excused the test" : "The instructor closed the test",
+        action: isExcused ? "excuseTest" : "closeTest",
+        message: isExcused ? "The instructor excused the test" : "The instructor closed the test",
       });
       //if test is excused email the student
       return result;
@@ -1176,4 +1176,51 @@ module.exports = {
       return fixedStudents;
     }
   },
+
+  allStudents: async function ({ }, req) {
+    //only admin should be able to access all student accounts
+    if (!req.instructorIsAuth) {
+      const error = new Error("No instructor!");
+      error.code = 401;
+      throw error;
+    }
+
+    const isAdmin = await Instructor.find({ admin: true });
+    if (!isAdmin) {
+      const error = new Error("Unauthorized access, only admin allowed!");
+      error.code = 403;
+      throw error;
+    }
+
+    const students = await Student.find().populate(
+      "testResults"
+    );
+
+    const fixedStudents = await Promise.all(
+      students.map(async (student) => {
+        const fixedTestResults = student.testResults.map(
+          async (result) => await updateResultUrls(result)
+        );
+        const documents = await Promise.all(
+          student.documents.map(async (d) => {
+            return {
+              documentType: d.documentType,
+              document: await getObjectUrl(d.document),
+            };
+          })
+        );
+        return {
+          ...student._doc,
+          _id: student._id.toString(),
+          testResults: fixedTestResults,
+          profilePicture: await getObjectUrl(student.profilePicture),
+          documents,
+        };
+      })
+    );
+    return fixedStudents;
+
+  },
+
 };
+

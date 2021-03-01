@@ -33,6 +33,11 @@ module.exports = buildSchema(`
         testResults:[TestResult]
         documents: [Doc]
     }
+    
+    type Document {
+        document:String!
+        documentType:String!
+    }
  
     type Instructor {
         _id: ID!
@@ -45,6 +50,7 @@ module.exports = buildSchema(`
         profilePicture:String
         blockedContacts:[String]
         lastLogin:String
+        documents:[Doc]
     }
 
     type Slide {

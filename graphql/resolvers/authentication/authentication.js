@@ -7,6 +7,10 @@ const xss = require("xss");
 const { noHtmlTags } = require("../validation/xssWhitelist");
 const { transporter } = require("../../../util/transporter");
 const Configuration = require("../../../models/configuration");
+const Notification = require("../../../models/notification");
+const Instructor = require("../../../models/instructor");
+const { sendEmailToOneUser } = require("../../../util/email-user");
+const io = require("../../../socket");
 
 module.exports = {
   userLogin: async function ({ email, password, userType }) {
@@ -21,6 +25,11 @@ module.exports = {
     if (!user.accountVerified) {
       const error = new Error("notVerifiedCheckEmail");
       error.code = 401;
+      throw error;
+    }
+    if (user.isAccountSuspended) {
+      const error = new Error("accountSuspended");
+      error.code = 403;
       throw error;
     }
     const isEqual = await bcrypt.compare(password, user.password);
@@ -44,7 +53,7 @@ module.exports = {
       token: token,
       userId: user._id.toString(),
       expiresIn: process.env.SESSION_EXPIRATION_TIME,
-      language:user.language,
+      language: user.language,
       // firstName: user.firstName,
       // lastName: user.lastName,
       // testResults: user.testResults,
@@ -57,7 +66,7 @@ module.exports = {
     };
   },
 
-  user: async function ({}, req) {
+  user: async function ({ }, req) {
     let userType;
     if (req.instructorIsAuth) userType = "instructor";
     if (req.studentIsAuth) userType = "student";
@@ -94,7 +103,6 @@ module.exports = {
       error.code = 422;
       throw error;
     }
-
     const token = jwt.sign(
       {
         [accountInput.accountType + "Id"]: accountInput.id.toString(),
@@ -111,12 +119,17 @@ module.exports = {
     );
 
     const User = require(`../../../models/${accountInput.accountType}`);
-    let foundAdmin;
-    if (accountInput.accountType === "instructor") {
-      foundAdmin = await User.findOne({ admin: true });
-    }
+    const foundAdmin = await Instructor.findOne({ admin: true });
     const shouldCreateAdmin =
       !foundAdmin && accountInput.accountType === "instructor";
+    console.log('e');
+    const admin = await Instructor.findOne({ admin: true }).populate(
+      "configuration"
+    );
+    let adminSettings
+    if (admin) {
+      adminSettings = admin._doc.configuration;
+    }
 
     const userId = xss(accountInput.id, noHtmlTags);
 
@@ -126,21 +139,21 @@ module.exports = {
         user: userId,
         isChatNotifications: true,
         isHideActiveStatus: false,
-        dropCourseGrade:30,
+        dropCourseGrade: 30,
         isDropCoursePenalty: true,
         coursePassGrade: 50,
         isEnrollAllowedAfterDropCourse: true,
-        isInstructorCoursesLimit:true,
+        isInstructorCoursesLimit: true,
         instructorCoursesLimit: 10,
         isApproveInstructorAccounts: true,
         isApproveStudentAccounts: true,
-        isContentBlockedCourseEnd:true,
+        isContentBlockedCourseEnd: true,
         studentFileSizeLimit: 25, //MB
         instructorFileSizeLimit: 100, //MB
         isPasswordRequiredStartTest: true,
         voiceRecordTimeLimit: 60, //seconds
         blockedInstructors: [],
-        blockedStudents:[],
+        blockedStudents: [],
         isChatAllowedOutsideOfficehours: false,
 
         isSendTestNotifications: true,
@@ -152,14 +165,14 @@ module.exports = {
         isSendCourseNotifications: true,
         isSendCourseEmails: true,
 
-        isEnrollEmails:true,
-        isEnrollNotifications:true,
-        isDropCourseEmails:true,
-        isDropCourseNotifications:true,
-        isNewInstructorAccountEmails:true,
-        isNewInstructorAccountNotifications:true,
-        isAllowDeleteStudentAccount:true,
-        isAllowDeleteInstructorAccount:true,
+        isEnrollEmails: true,
+        isEnrollNotifications: true,
+        isDropCourseEmails: true,
+        isDropCourseNotifications: true,
+        isNewInstructorAccountEmails: true,
+        isNewInstructorAccountNotifications: true,
+        isAllowDeleteStudentAccount: true,
+        isAllowDeleteInstructorAccount: true,
       });
     }
 
@@ -178,10 +191,10 @@ module.exports = {
         isSendCourseNotifications: true,
         isSendCourseEmails: true,
 
-        isEnrollEmails:true,
-        isEnrollNotifications:true,
-        isDropCourseEmails:true,
-        isDropCourseNotifications:true,
+        isEnrollEmails: true,
+        isEnrollNotifications: true,
+        isDropCourseEmails: true,
+        isDropCourseNotifications: true,
       });
     }
 
@@ -201,7 +214,6 @@ module.exports = {
         isHideActiveStatus: false,
       });
     }
-
     const createdConfig = await configuration.save();
 
     const user = new User({
@@ -219,19 +231,80 @@ module.exports = {
       accountVerificationTokenExpiration: Date.now() + 3600000 * 24 * 7, // 1 week,
       admin: shouldCreateAdmin,
       configuration: createdConfig._id,
+      isAccountApproved: shouldCreateAdmin || !adminSettings.isApproveInstructorAccounts ? true : false,
+      isAccountSuspended: false,
     });
-
+    //send e-mail to new user to verify account
+    const primaryText = i18n.__("verifyAccountEmail")
+    const secondaryText = "";
+    const tertiaryText = ""
+    const buttonUrl = `${process.env.APP_URL}verify-account/${accountType}/${token}`
+    const buttonText = i18n.__("buttons.confirm")
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: accountInput.email,
-      subject: "Verify",
-      html: `
-          <p>Click <a href="${process.env.APP_URL}verify-account/${accountInput.accountType}/${token}">here</a> to verify your account</p>
-      `,
+      subject: i18n.__("verifyAccountEmailSubject"),
+      html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl),
     });
 
+    if (!shouldCreateAdmin) {
+      //send e-mail notifying admin
+      let condition, notificationContent;
+      if (accountInput.accountType === 'instructor') {
+        condition = 'isNewInstructorAccountEmails'
+        notificationContent = 'newInstructorAccount'
+      }
+      if (accountInput.accountType === 'student') {
+        condition = 'isNewStudentAccountEmails'
+        notificationContent = 'newStudentAccount'
+      }
+      let secondaryContent;
+      if (
+        (accountInput.accountType === 'student' && adminSettings.isApproveStudentAccounts) ||
+        accountInput.accountType === 'instructor' && adminSettings.isApproveInstructorAccounts
+      ) {
+        secondaryContent = 'pendingApproval'
+      }
+      const createdUser = await user.save();
+
+      transporter.sendMail({
+        from: "e-learn@learn.com",
+        to: accountInput.email,
+        subject: i18n.__("verifyAccountEmailSubject"),
+        html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl),
+      });
+
+      await sendEmailToOneUser({
+        userId: foundAdmin._id,
+        course: null,
+        subject: notificationContent + 'Subject',
+        content: notificationContent,
+        secondaryContent,
+        student: accountInput.accountType === 'student' ? user : null,
+        instructor: accountInput.accountType === 'instructor' ? user : null,
+        condition,
+        userType: 'instructor',
+        userTypeSender: accountInput.accountType,
+      });
+      const notification = new Notification({
+        toUserType: "instructor",
+        toSpecificUser: foundAdmin._id,
+        fromUser: createdUser._id,
+        // content: secondaryContent ?  [notificationContent,secondaryContent] : [notificationContent],
+        content: [notificationContent],
+        documentType: notificationContent,
+        // documentId: courseId,
+        // course: courseId,
+      });
+
+      await notification.save();;
+      io.getIO().emit("newAccount", {
+        userType: "admin",
+      });
+
+      return { ...createdUser._doc, _id: createdUser._id.toString() };
+    }
     const createdUser = await user.save();
-    
     return { ...createdUser._doc, _id: createdUser._id.toString() };
   },
 
@@ -361,20 +434,22 @@ module.exports = {
     user.accountVerificationToken = token;
     (user.accountVerificationTokenExpiration = Date.now() + 3600000 * 24 * 7), // 1 week,
       await user.save();
-
+    const primaryText = i18n.__("verifyAccountEmail")
+    const secondaryText = ""
+    const tertiaryText = ""
+    const buttonUrl = `${process.env.APP_URL}verify-account/${accountType}/${token}`
+    const buttonText = i18n.__("buttons.confirm")
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: email,
-      subject: "Verify",
-      html: `
-          <p>Click <a href="${process.env.APP_URL}verify-account/${accountType}/${token}">here</a> to verify your account</p>
-      `,
+      subject: i18n.__("verifyAccountEmailSubject"),
+      html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl)
     });
 
     return "E-mail sent";
   },
 
-  refreshToken: async function ({}, req) {
+  refreshToken: async function ({ }, req) {
     let userType;
     if (req.instructorIsAuth) userType = "instructor";
     if (req.studentIsAuth) userType = "student";

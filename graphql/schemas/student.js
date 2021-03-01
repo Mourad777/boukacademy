@@ -109,6 +109,8 @@ module.exports = buildSchema(`
         testInSession: TestInSession
         completedCourses: [ID]
         documents:[Doc]
+        isAccountSuspended:Boolean!
+        isAccountApproved:Boolean!
     }
 
     type MultipleChoiceAnswer {
@@ -226,6 +228,7 @@ module.exports = buildSchema(`
         testResults: testData!
         testResult:TestResult!
         student: Student!
+        allStudents: [Student]!
         students(courseId:ID!): [Student]!
     }
 

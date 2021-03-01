@@ -30,8 +30,6 @@ module.exports = {
         .reverse()
         .map(async (n) => {
           const seen = (n.usersSeen || []).includes(req.userId.toString());
-          const course = await Course.findById(n.course);
-
           //filter notifications according to users config settings
           if (
             (n.documentType === "courseOfficeHours" &&
@@ -53,6 +51,18 @@ module.exports = {
               !configuration.isTestNotifications) ||
             (n.documentType === "assignmentSubmitted" &&
               !configuration.isAssignmentNotifications) ||
+
+            (n.documentType === "newStudentAccount" &&
+              !configuration.isNewStudentAccountNotifications) ||
+
+            (n.documentType === "newInstructorAccount" &&
+              !configuration.isNewInstructorAccountNotifications) ||
+
+            (n.documentType === "assignmentSubmitted" &&
+              !configuration.isAssignmentNotifications) ||
+
+            (n.documentType === "autoEnroll" &&
+              !configuration.isEnrollNotifications) ||
 
             (n.documentType === "testExcused" &&
               !configuration.isTestNotifications) ||
@@ -91,7 +101,7 @@ module.exports = {
             )
               return null;
           }
-          if (instructor) {
+          if (instructor && n.course) {
             //filter instructor notifications
             if (!instructor.coursesTeaching.includes(n.course)) return null;
           }

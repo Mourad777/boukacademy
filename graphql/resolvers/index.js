@@ -1,4 +1,5 @@
 const {mergeResolvers} = require('merge-graphql-schemas') 
+const adminResolver = require('./admin/accounts')
 const studentResolver = require('./student/student')
 const instructorResolver = require('./instructor/instructor')
 const courseResolver = require('./course/course')
@@ -12,6 +13,7 @@ const authenticationResolver = require('./authentication/authentication')
 const configurationResolver = require('./configuration/configuration')
 
 const resolvers = [
+    adminResolver,
     studentResolver,
     instructorResolver,
     courseResolver,

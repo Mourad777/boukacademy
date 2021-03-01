@@ -145,6 +145,9 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isApproveStudentAccounts + "")) {
       errors.push({ message: "isApproveStudentAccounts must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isApproveEnrollments + "")) {
+      errors.push({ message: "isApproveEnrollments must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isContentBlockedCourseEnd + "")) {
       errors.push({ message: "isContentBlockedCourseEnd must be true or false" });
     }
@@ -198,6 +201,13 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     }
     if (!validator.isBoolean(configInput.isNewInstructorAccountNotifications + "")) {
       errors.push({ message: "isNewInstructorAccountNotifications must be true or false" });
+    }
+
+    if (!validator.isBoolean(configInput.isNewStudentAccountEmails + "")) {
+      errors.push({ message: "isNewStudentAccountEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isNewStudentAccountNotifications + "")) {
+      errors.push({ message: "isNewStudentAccountNotifications must be true or false" });
     }
     // if (!validator.isBoolean(configInput.isAllowDeleteStudentAccount + "")) {
     //   errors.push({ message: "isAllowDeleteStudentAccount must be true or false" });

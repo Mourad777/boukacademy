@@ -26,7 +26,7 @@ const { clearHash } = require("../../../util/cache");
 const lodash = require("lodash");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-
+//admin
 module.exports = {
   createCourse: async function ({ courseInput }, req) {
     if (!req.instructorIsAuth) {
@@ -1100,21 +1100,29 @@ module.exports = {
     const student = await Student.findById(studentId);
     const instructor = await Instructor.findById(req.userId);
     const course = await Course.findById(courseId);
-    if (!instructor) {
+    const admin = await Instructor.findOne({ admin: true }).populate(
+      "configuration"
+    );
+    const adminSettings = admin._doc.configuration;
+    const isApproveEnrollments = adminSettings.isApproveEnrollments;
+
+    if (!instructor && isApproveEnrollments) {
       const error = new Error("No instructor authenticated");
       error.code = 403;
       throw error;
     }
-    const instructorConfig = await Configuration.findOne({
+    const config = await Configuration.findOne({
       user: req.userId,
     });
-    if (!instructorConfig) {
+
+    if (!config) {
       const error = new Error("No configuration found!");
       error.code = 404;
       throw error;
     }
-    const isSendNotifications = instructorConfig.isSendCourseNotifications
-    const isSendEmails = instructorConfig.isSendCourseEmails
+    const isSendNotifications = config.isSendCourseNotifications
+    const isSendEmails = config.isSendCourseEmails
+
     if (!student) {
       const error = new Error("No student found");
       error.code = 401;
@@ -1160,21 +1168,22 @@ module.exports = {
 
     await Notification.deleteMany({
       documentType: {
-        $in: ["courseEnrollDeny", "courseEnrollApprove"],
+        $in: ["courseEnrollDeny", "courseEnrollApprove", "autoEnroll"],
       },
       fromUser: req.userId,
       course: courseId,
     });
 
     const notification = new Notification({
-      toUserType: "unique",
+      toUserType: instructor ? "unique" : 'instructor',
       fromUser: req.userId,
-      toSpecificUser: studentId,
-      content: ["courseEnrollApprove"],
-      documentType: "courseEnrollApprove",
+      toSpecificUser: instructor ? studentId : course.courseInstructor,
+      content: instructor ? ["courseEnrollApprove"] : ['autoEnroll'],
+      documentType: instructor ? "courseEnrollApprove" : "autoEnroll",
       documentId: courseId,
       course: courseId,
     });
+
     const requestToReplace = course.studentsEnrollRequests.find(
       (r) => r.student.toString() === student._id.toString()
     );
@@ -1192,19 +1201,18 @@ module.exports = {
     // course.studentsEnrollDenied.pull(student);
     // course.studentsEnrolled.push(student);
     student.coursesEnrolled.push(course);
-
     await student.save();
     await course.save();
-    if (isSendNotifications) await notification.save();
-    if (isSendEmails) {
+    if (isSendNotifications || !instructor) await notification.save();
+    if (isSendEmails || !instructor) {
       await sendEmailToOneUser({
-        userId: studentId,
+        userId: !!instructor ? studentId : course.courseInstructor,
         course,
-        subject: 'courseEnrollApproveSubject',
-        content: 'courseEnrollApprove',
+        subject: !!instructor ? "courseEnrollApproveSubject" : 'autoEnrollSubject',
+        content: !!instructor ? "courseEnrollApprove" : 'autoEnroll',
         student,
-        condition: 'isCourseEmails',
-        userType: 'student'
+        condition: !!instructor ? 'isCourseEmails' : "isEnrollEmails",
+        userType: !!instructor ? 'student' : 'instructor',
       });
     }
     clearHash(course._id);
@@ -1216,7 +1224,7 @@ module.exports = {
       userType: "all",
       courseId: course._id,
     });
-    return "student request approved";
+    return !!instructor ? "student request approved" : "Enroll success";
   },
 
   enrollDeny: async function (
@@ -1510,11 +1518,11 @@ module.exports = {
       (course.courseDropDeadline || "").toString()
     ).getTime();
 
-    if ((isCourseDropped && !course.courseDropDeadline) || (isCourseDropped && course.courseDropDeadline && (courseDropDeadline > Date.now()) )) {
-        const error = new Error("Can't grade the course if their is no drop deadline or the deadline has not yet passed");
-        error.code = 401;
-        throw error;
-      
+    if ((isCourseDropped && !course.courseDropDeadline) || (isCourseDropped && course.courseDropDeadline && (courseDropDeadline > Date.now()))) {
+      const error = new Error("Can't grade the course if their is no drop deadline or the deadline has not yet passed");
+      error.code = 401;
+      throw error;
+
     }
 
     const errors = await validateFinalGrade({

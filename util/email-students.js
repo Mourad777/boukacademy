@@ -5,9 +5,12 @@ const Configuration = require("../models/configuration");
 const Student = require("../models/student");
 const moment = require("moment");
 const momentTZ = require("moment-timezone");
+const { emailTemplate } = require("./email-template");
 // list-style: none;
 //     background-color: grey;
 //     padding: 5px;
+
+
 const getOfficehourTemplate = (course, language) => {
   let weeklyOfficeHours = "";
   let otherOfficeHours = "";
@@ -49,13 +52,13 @@ const getOfficehourTemplate = (course, language) => {
   <h3 style="font-family:sans-serif;font-weight:400;color:black;">${
     weeklyOfficeHours ? i18n.__("weeklyOfficeHours") : ""
   }</h3>
-  <ul>
+  <ul style="padding-left:0;">
   ${weeklyOfficeHours}
   </ul>
   <h3 style="font-family:sans-serif;font-weight:400;color:black;">${
     weeklyOfficeHours ? i18n.__("specificDateOfficeHours") : ""
   }</h3>
-  <ul>
+  <ul style="padding-left:0;">
       ${otherOfficeHours}
   </ul>
   </div>
@@ -171,6 +174,25 @@ const sendEmailsToStudents = async ({
           });
         }
 
+        const primaryText = `
+        ${
+          Array.isArray(content)
+            ? 
+           i18n.__(subject, {
+            courseName: course.courseName,
+            testOrAssignment: test.assignment
+            ? i18n.__("assignment")
+            : i18n.__("test"),
+            workName:test.testName
+        })
+            : ""
+        }
+        `
+        const secondaryText = emailData
+        const tertiaryText = subContent
+
+        const html = emailTemplate(primaryText,secondaryText,tertiaryText);
+
         transporter.sendMail({
           from: "e-learn@learn.com",
           to: email,
@@ -181,24 +203,7 @@ const sendEmailsToStudents = async ({
               : i18n.__("test"),
             workName:test.testName
           }),
-          html: `
-            ${
-              Array.isArray(content)
-                ? 
-                `<h2 style="font-family:sans-serif;font-weight:400;color:black;">
-                ${i18n.__(subject, {
-                courseName: course.courseName,
-                testOrAssignment: test.assignment
-                ? i18n.__("assignment")
-                : i18n.__("test"),
-                workName:test.testName
-            })}
-            </h2>`
-                : ""
-            }
-            ${emailData}
-            ${subContent}
-            `,
+          html,
         });
       }
     })

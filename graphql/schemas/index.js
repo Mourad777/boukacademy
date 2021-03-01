@@ -1,5 +1,6 @@
 const {mergeTypes} = require('merge-graphql-schemas') 
 
+const adminType = require('./admin')
 const studentType = require('./student')
 const instructorType = require('./instructor')
 const courseType = require('./course')
@@ -13,6 +14,7 @@ const authenticationType = require('./authentication')
 const configurationType = require('./configuration')
 
 const types = [
+    adminType,
     studentType,
     instructorType,
     courseType,

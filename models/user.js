@@ -57,6 +57,14 @@ const UserSchema = new mongoose.Schema({
     type:String,
     required:true,
   },
+  isAccountApproved: {
+    type: Boolean,
+    required: true,
+  },
+  isAccountSuspended: {
+    type: Boolean,
+    required: true,
+  },
   configuration: { type: mongoose.Schema.Types.ObjectId, ref: "Configuration" },
 });
 

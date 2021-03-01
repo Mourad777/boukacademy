@@ -30,8 +30,9 @@ const instructorSchema = extend(UserSchema, {
   ],
   admin: {
     type: Boolean,
-    required: false,
+    required: true,
   },
+
 });
 
 module.exports = mongoose.model("Instructor", instructorSchema);

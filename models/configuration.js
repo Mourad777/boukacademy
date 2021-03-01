@@ -59,6 +59,11 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    isApproveEnrollments: {
+      //admin
+      type: Boolean,
+      required: false,
+    },
     isContentBlockedCourseEnd: {
       //admin
       type: Boolean,
@@ -193,6 +198,7 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+
     //admin
     isNewInstructorAccountEmails:{
       type: Boolean,
@@ -202,19 +208,27 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
-    isAllowDeleteStudentAccount:{
+    isNewStudentAccountEmails:{
       type: Boolean,
       required: false,
     },
-    isAllowDeleteInstructorAccount:{
+    isNewStudentAccountNotifications:{
       type: Boolean,
       required: false,
     },
+    // isAllowDeleteStudentAccount:{
+    //   type: Boolean,
+    //   required: false,
+    // },
+    // isAllowDeleteInstructorAccount:{
+    //   type: Boolean,
+    //   required: false,
+    // },
 
-    //student
-    blockedStudentsChat: [{ type: Schema.Types.ObjectId, ref: "Student" }],
-    //student
-    blockedStudents: [{ type: Schema.Types.ObjectId, ref: "Student" }],
+    // //student
+    // blockedStudentsChat: [{ type: Schema.Types.ObjectId, ref: "Student" }],
+    // //student
+    // blockedStudents: [{ type: Schema.Types.ObjectId, ref: "Student" }],
   },
   {
     timestamps: false,

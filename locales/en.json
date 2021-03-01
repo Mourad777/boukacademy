@@ -20,10 +20,23 @@
 	"courseEnrollRequest": "{{firstName}} {{lastName}} has requested to enroll in {{courseName}}",
 	"courseEnrollApprove": "The instructor has accepted your request to enroll in {{courseName}}",
 	"courseEnrollApproveSubject": "Enrollment approved",
+	"autoEnroll": "{{firstName}} {{lastName}} has enrolled in {{courseName}}",
+	"autoEnrollSubject": "A student has enrolled in {{courseName}}",
 	"courseEnrollDeny": "The instructor has denied you access to {{courseName}}.",
 	"courseEnrollDenySubject": "Access to {{courseName}} denied.",
 	"courseDrop": "{{firstName}} {{lastName}} dropped out of {{courseName}}.",
 	"courseDropSubject": "Student dropped {{courseName}}",
+	"newStudentAccount": "{{firstName}} {{lastName}} has opened a new student account.",
+	"newStudentAccountSubject": "A student has opened a new account. ",
+	"newInstructorAccount": "{{firstName}} {{lastName}} has opened a new instructor account.",
+	"newInstructorAccountSubject": "An instructor has opened a new account. ",
+	"pendingApproval": "Activation of the account requires your approval.",
+	"accountSuspended": "Your account has been suspended by the admin.",
+	"accountSuspendedSubject": "Account suspended.",
+	"accountActivatedSubject": "Account activated",
+	"accountActivated": "Your account has been activated",
+	"accountReactivatedSubject": "Account re-activated",
+	"accountReactivated": "Your account has been re-activated",
 	"gradeCourse": "You {{passOrFail}} {{courseName}} with a grade of {{grade}}%",
 	"gradeCourseSubject": "{{courseName}} grade posted",
 	"adjustGradeCourse": "The instructor adjusted your grade for {{courseName}}. You {{passOrFail}} with a grade of {{grade}}%",
@@ -68,5 +81,14 @@
 		"one": "You have %s message",
 		"other": "You have %s messages"
 	},
-	"lessonUpdatedSubject": "Lesson updated"
+	"lessonUpdatedSubject": "Lesson updated",
+	"You are posting innapropriate content": "You are posting innapropriate content",
+	"Innapropriate Content": "Innapropriate Content",
+	"abc": "abc",
+	"Innapropriate content": "Innapropriate content",
+	"verifyAccountEmail":"Click the link below to verify your account.",
+	"verifyAccountEmailSubject":"Verify your account",
+	"buttons":{
+		"confirm":"Confirm"
+	}
 }

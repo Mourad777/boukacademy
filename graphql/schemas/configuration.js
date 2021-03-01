@@ -14,6 +14,7 @@ module.exports = buildSchema(`
         instructorCoursesLimit:Int
         isApproveInstructorAccounts:Boolean
         isApproveStudentAccounts:Boolean
+        isApproveEnrollments:Boolean
         isContentBlockedCourseEnd:Boolean
         studentFileSizeLimit:Float
         instructorFileSizeLimit:Float
@@ -46,6 +47,8 @@ module.exports = buildSchema(`
         isDropCourseNotifications:Boolean
         isNewInstructorAccountEmails:Boolean
         isNewInstructorAccountNotifications:Boolean
+        isNewStudentAccountEmails:Boolean
+        isNewStudentAccountNotifications:Boolean
         isAllowDeleteStudentAccount:Boolean
         isAllowDeleteInstructorAccount:Boolean
 
@@ -65,6 +68,7 @@ module.exports = buildSchema(`
         instructorCoursesLimit:Int
         isApproveInstructorAccounts:Boolean
         isApproveStudentAccounts:Boolean
+        isApproveEnrollments:Boolean
         isContentBlockedCourseEnd:Boolean
         studentFileSizeLimit:Float
         instructorFileSizeLimit:Float
@@ -94,6 +98,8 @@ module.exports = buildSchema(`
         isDropCourseNotifications:Boolean
         isNewInstructorAccountEmails:Boolean
         isNewInstructorAccountNotifications:Boolean
+        isNewStudentAccountEmails:Boolean
+        isNewStudentAccountNotifications:Boolean
         isAllowDeleteStudentAccount:Boolean
         isAllowDeleteInstructorAccount:Boolean
 

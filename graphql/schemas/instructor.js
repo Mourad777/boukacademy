@@ -83,6 +83,11 @@ module.exports = buildSchema(`
         timezoneRegion:String!
     }
 
+    type Doc {
+        document: String!
+        documentType: String!
+    }
+
     type Instructor {
         _id: ID!
         firstName: String!
@@ -95,6 +100,9 @@ module.exports = buildSchema(`
         profilePicture:String
         blockedContacts:[String]
         lastLogin:String
+        documents:[Doc]
+        isAccountSuspended:Boolean!
+        isAccountApproved:Boolean!
     }
 
     type RootQuery {

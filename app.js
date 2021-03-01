@@ -7,7 +7,8 @@ const redis = require("redis");
 const client = redis.createClient(process.env.REDIS_URL);
 const path = require("path");
 const Instructor = require("./models/instructor");
-//24759
+const Student = require("./models/student");
+
 const {
   onNotifyOfDocUpdate,
   onLoggedIn,
@@ -204,17 +205,12 @@ mongoose
   .then(async (result) => {
     console.log("connected to mongoose");
 
-    // await Result.updateMany({},{isExcused:false})
-    // await Test.updateMany({},{isGradeIncluded:true})
-    // Don't expose our internal server to the outside.
+    // await Instructor.updateMany({},{isAccountApproved:true,isAccountSuspended:false});
+    // await Student.updateMany({},{isAccountApproved:true,isAccountSuspended:false});
+
     const expressServer = app.listen(port);
     const io = require("./socket").init(expressServer);
 
-    // Tell Socket.IO to use the redis adapter. By default, the redis
-    // server is assumed to be on localhost:6379. You don't have to
-    // specify them explicitly unless you want to change them.
-    // io.adapter(sio_redis( REDIS_URL));
-    // Here you might use Socket.IO middleware for authorization etc.
     io.use(socketAuth);
     io.on("connection", function (socket) {
       // console.log("New client connected");
@@ -229,14 +225,5 @@ mongoose
       onLogout(socket); //fired when user logs out
       onDisconnect(socket);
       onReconnect(socket);
-      // socket.emit("data", "connected to worker: " + cluster.worker.id);
     });
-    // Listen to messages sent from the master. Ignore everything else.
-    // process.on("message", function (message, connection) {
-    //   if (message !== "sticky-session:connection") {
-    //     return;
-    //   }
-    //   // Emulate a connection event on the server by emitting the
-    //   // event with the connection the master sent us.
-    // });
   });

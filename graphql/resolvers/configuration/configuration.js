@@ -2,9 +2,9 @@ const Configuration = require("../../../models/configuration");
 const Course = require("../../../models/course");
 const io = require("../../../socket");
 const Instructor = require("../../../models/instructor");
-const {validateConfiguration} = require("./validate")
+const { validateConfiguration } = require("./validate")
 module.exports = {
-  configuration: async function ({}, req) {
+  configuration: async function ({ }, req) {
     let userType;
     if (req.instructorIsAuth) userType = "instructor";
     if (req.studentIsAuth) userType = "student";
@@ -66,12 +66,20 @@ module.exports = {
   },
 
   updateConfiguration: async function ({ configurationInput }, req) {
+
     let userType;
     if (req.instructorIsAuth) userType = "instructor";
     if (req.studentIsAuth) userType = "student";
     const user = await require(`../../../models/${userType}`).findById(
       req.userId
     );
+
+    const isAccountSuspended = user.isAccountSuspended
+    if (isAccountSuspended) {
+      const error = new Error("Your account has been suspended contact the administrator");
+      error.code = 403;
+      throw error;
+    }
 
     if (!user) {
       const error = new Error("No account found with the provided token");
@@ -86,8 +94,7 @@ module.exports = {
       throw error;
     }
 
-    const errors = validateConfiguration(configurationInput,userType,user.admin);
-    console.log('errors: ',errors)
+    const errors = validateConfiguration(configurationInput, userType, user.admin);
     if (errors.length > 0) {
       const error = new Error("Invalid input.");
       error.data = errors;
@@ -180,6 +187,8 @@ module.exports = {
         configurationInput.isApproveInstructorAccounts;
       config.isApproveStudentAccounts =
         configurationInput.isApproveStudentAccounts;
+      config.isApproveEnrollments =
+        configurationInput.isApproveEnrollments;
       config.isContentBlockedCourseEnd =
         configurationInput.isContentBlockedCourseEnd;
       config.studentFileSizeLimit = configurationInput.studentFileSizeLimit;
@@ -204,6 +213,11 @@ module.exports = {
         configurationInput.isNewInstructorAccountEmails;
       config.isNewInstructorAccountNotifications =
         configurationInput.isNewInstructorAccountNotifications;
+      config.isNewStudentAccountEmails =
+        configurationInput.isNewStudentAccountEmails;
+      config.isNewStudentAccountNotifications =
+        configurationInput.isNewStudentAccountNotifications;
+
       // config.isAllowDeleteStudentAccount =
       //   configurationInput.isAllowDeleteStudentAccount;
       // config.isAllowDeleteInstructorAccount =
