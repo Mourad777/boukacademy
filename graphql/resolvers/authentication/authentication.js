@@ -11,6 +11,8 @@ const Notification = require("../../../models/notification");
 const Instructor = require("../../../models/instructor");
 const { sendEmailToOneUser } = require("../../../util/email-user");
 const io = require("../../../socket");
+const { i18n } = require("../../../i18n.config");
+const { emailTemplate } = require("../../../util/email-template");
 
 module.exports = {
   userLogin: async function ({ email, password, userType }) {
@@ -238,7 +240,7 @@ module.exports = {
     const primaryText = i18n.__("verifyAccountEmail")
     const secondaryText = "";
     const tertiaryText = ""
-    const buttonUrl = `${process.env.APP_URL}verify-account/${accountType}/${token}`
+    const buttonUrl = `${process.env.APP_URL}verify-account/${accountInput.accountType}/${token}`
     const buttonText = i18n.__("buttons.confirm")
     transporter.sendMail({
       from: "e-learn@learn.com",

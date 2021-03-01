@@ -78,9 +78,10 @@
 		"one": "You have %s message",
 		"other": "You have %s messages"
 	},
-	"verifyAccountEmail":"Haga clic en el enlace de abajo para verificar su cuenta.",
-	"verifyAccountEmailSubject":"Verifica su cuenta.",
-	"buttons":{
-		"confirm":"Confirmar"
-	}
+	"verifyAccountEmail": "Haga clic en el enlace de abajo para verificar su cuenta.",
+	"verifyAccountEmailSubject": "Verifica su cuenta.",
+	"buttons": {
+		"confirm": "Confirmar"
+	},
+	"buttons.confirm": "buttons.confirm"
 }
