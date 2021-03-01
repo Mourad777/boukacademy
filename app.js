@@ -205,8 +205,8 @@ mongoose
   .then(async (result) => {
     console.log("connected to mongoose");
 
-    // await Instructor.updateMany({},{isAccountApproved:true,isAccountSuspended:false});
-    // await Student.updateMany({},{isAccountApproved:true,isAccountSuspended:false});
+    await Instructor.update({},{isAccountApproved:true,isAccountSuspended:false});
+    await Student.update({},{isAccountApproved:true,isAccountSuspended:false});
 
     const expressServer = app.listen(port);
     const io = require("./socket").init(expressServer);
