@@ -22,6 +22,8 @@
 	"courseEnrollApproveSubject": "Solicitud de inscripción aprobado",
 	"courseEnrollDeny": "El profesor le ha negado el acceso a {{courseName}}.",
 	"courseEnrollDenySubject": "Acceso a {{courseName}} negado",
+	"autoEnroll": "{{firstName}} {{lastName}} se ha matriculado en {{courseName}}",
+	"autoEnrollSubject": "Un estudiante se ha matriculado en {{courseName}}",
 	"gradeCourse": "Usted {{passOrFail}} {{courseName}} con una calificación de {{grade}}%",
 	"gradeCourseSubject": "Se subió la calificación para {{courseName}}",
 	"adjustGradeCourse": "El profesor ajustó su calificación para {{courseName}}. Usted {{passOrFail}} con una calificación de {{grade}}%",
@@ -56,7 +58,7 @@
 	"workUpdatedSubject": "La {{testOrAssignment}} {{workName}} se actualizó",
 	"workReset": "El profesor reinició la {{testOrAssignment}} {{workName}}. {{message}}",
 	"workResetCanTakeAgain": "El profesor reinició la {{testOrAssignment}} {{workName}}. El progreso o la calificación se ha eliminado y puede volver a tomarlo",
-	"workResetSubject": "La {{testOrAssignment}} se reinició",
+	"workResetSubject": "La {{testOrAssignment}} {{workName}} se reinició",
 	"workExcusedSubject": "Su {{testOrAssignment}} ha sido perdonada",
 	"workExcused": "Su {{testOrAssignment}} {{workName}} ha sido perdonada y no se incluirá en la calificación final.",
 	"workSubmitted": "{{firstName}} presentó una {{testOrAssignment}}",
@@ -83,5 +85,7 @@
 	"buttons": {
 		"confirm": "Confirmar"
 	},
-	"buttons.confirm": "buttons.confirm"
+	"courseDrop": "{{firstName}} {{lastName}} dejó el curso {{courseName}}.",
+	"newMessageFromInstructor":"Nuevo mensaje del profesor",
+	"newMessageFromStudent":"Nuevo mensaje de {{firstName}}"
 }

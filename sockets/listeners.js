@@ -10,6 +10,7 @@ const redis = require("redis");
 const { getObjectUrl } = require("../s3");
 const client = redis.createClient(process.env.REDIS_URL);
 const io = require("../socket");
+const { pushNotify } = require("../util/pushNotification");
 
 //important notes 
 //the whole point of storing the user id with the socket id
@@ -291,6 +292,29 @@ const onMessage = (socket) => {
         });
 
         const newNotification = await notification.save();
+        console.log('msg.recipient._id',msg.recipient._id)
+        let sender;
+
+        try {
+          const notificationOptions = {
+            multipleUsers:false,
+            content:msg.content,
+            isIM:true,
+            course:msg.course,
+            userId:msg.recipient._id,
+            imSender:user,
+            isImSenderInstructor:msg.userType === "instructor",
+            // isStudentRecieving: !!student,
+            // isInstructorRecieving:!!instructor,
+            // student,
+            // isStudentRecieving:!!instructor,
+            // isInstructorRecieving:!instructor,
+          }
+          await pushNotify(notificationOptions)
+        } catch(e){
+          console.log('eee',e)
+        }
+
         //check if user is in chat room before pushing message
         // Notify specific user about a new message inside the chatroom.
         socket.to(dmRoom).emit("push", { ...msg, file:msg.file ? await getObjectUrl(msg.file) : '', sender: socket.userId });

@@ -7,7 +7,9 @@ const redis = require("redis");
 const client = redis.createClient(process.env.REDIS_URL);
 const path = require("path");
 const Instructor = require("./models/instructor");
-const Student = require("./models/student");
+const webpush = require('web-push')
+const publicVapidKey = process.env.PUBLIC_VAPID_KEY
+const privateVapidKey = process.env.PRIVATE_VAPID_KEY
 
 const {
   onNotifyOfDocUpdate,
@@ -39,12 +41,14 @@ const mongoose = require("mongoose");
 
 
 const Result = require('./models/result')
-const Test = require('./models/test')
+const Test = require('./models/test');
+const { sub } = require("./graphql/schemas/index");
 
 const multerUpload = multer().any();
 
 app.use(multerUpload);
 app.use(bodyParser.json());
+
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -59,6 +63,29 @@ app.use((req, res, next) => {
   next();
 });
 app.use(auth);
+
+webpush.setVapidDetails('mailto:mourad777b@gmail.com',publicVapidKey,privateVapidKey)
+
+app.post('/subscribe',async(req,res)=>{
+  console.log('in subscribe')
+  const subscription = req.body
+  console.log('subscription',subscription)
+  console.log('req.userId',req.userId)
+  let userType;
+  if(req.instructorIsAuth){
+    userType = 'instructor'
+  }
+  if(req.studentIsAuth){
+    userType = 'student'
+  }
+  if(req.userId){
+    const user = await require(`./models/${userType}`).findById(req.userId)
+    console.log('user: ',user)
+    user.notificationSubscription = subscription
+    await user.save()
+  }
+  res.status(201).json({})
+})
 
 app.put("/upload", async (req, res, next) => {
   if (!req.instructorIsAuth && !req.studentIsAuth) {

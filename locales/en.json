@@ -61,7 +61,7 @@
 	"workResetCanTakeAgain": "The instructor reset the {{testOrAssignment}} {{workName}}. The progress or grade has been deleted and you can take it again.",
 	"workExcusedSubject": "Your {{testOrAssignment}} has been excused",
 	"workExcused": "Your {{testOrAssignment}} {{workName}} has been excused and will not be included in the final grade.",
-	"workResetSubject": "The {{testOrAssignment}} was reset",
+	"workResetSubject": "The {{testOrAssignment}} {{workName}} was reset",
 	"workSubmitted": "{{firstName}} submitted {{aOrAn}} {{testOrAssignment}}",
 	"workSubmittedSubject": "A student submitted {{aOrAn}} {{testOrAssignment}}",
 	"workGraded": "Your {{testOrAssignment}} {{workName}} has been graded {{grade}}% {{passOrFail}}",
@@ -86,9 +86,14 @@
 	"Innapropriate Content": "Innapropriate Content",
 	"abc": "abc",
 	"Innapropriate content": "Innapropriate content",
-	"verifyAccountEmail":"Click the link below to verify your account.",
-	"verifyAccountEmailSubject":"Verify your account",
-	"buttons":{
-		"confirm":"Confirm"
-	}
+	"verifyAccountEmail": "Click the link below to verify your account.",
+	"verifyAccountEmailSubject": "Verify your account",
+	"buttons": {
+		"confirm": "Confirm"
+	},
+	"hey": "hey",
+	"hey!": "hey!",
+	"..": "..",
+	"newMessageFromInstructor":"New message from instructor",
+	"newMessageFromStudent":"New message from {{firstName}}"
 }

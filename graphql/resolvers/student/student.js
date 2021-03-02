@@ -20,7 +20,9 @@ const { updateResultUrls } = require("../../../util/updateResultUrls");
 const { getObjectUrl } = require("../../../s3");
 const { sendEmailToOneUser } = require("../../../util/email-user");
 const { updateClassAverage } = require("../../../util/updateClassAverage");
-//closetest
+const { i18n } = require("../../../i18n.config");
+const { pushNotify } = require("../../../util/pushNotification");
+
 module.exports = {
   testResults: async function ({ }, req) {
     if (!req.studentIsAuth) {
@@ -826,11 +828,23 @@ module.exports = {
 
       test.classAverage = await updateClassAverage(test)
       if (graded) await test.save();
+
+      //push notification
+      const notificationOptions = {
+        multipleUsers: false,
+        content: 'workGraded',
+        test: test,
+        grade: result.grade,
+        passed: test.passingGrade ? test.passingGrade < result.grade ? true : false : "",
+        userId: studentId,
+        isStudentRecieving: true,
+      }
       if (
         ((isSendTestEmails && !test.assignment) ||
           (isSendAssignmentEmails && test.assignment)) &&
         req.instructorIsAuth
       ) {
+        await pushNotify(notificationOptions)
         await sendEmailToOneUser({
           userId: studentId,
           course,
@@ -890,13 +904,22 @@ module.exports = {
 
     await student.save();
     await result.save();
-    if (testClosed) await notification.save();
-    // if (
-    //   ((isSendTestEmails && !test.assignment) ||
-    //     (isSendAssignmentEmails && test.assignment)) &&
-    //   req.studentIsAuth
-    // ) {
+
     if (testClosed) {
+      //bell notification
+      await notification.save();
+      //push notification
+      const notificationOptions = {
+        multipleUsers: false,
+        content: 'workSubmitted',
+        test: test,
+        student:student,
+        passOrFail: test.passingGrade ? test.passingGrade < result.grade ? i18n.__("passed") : i18n.__("failed") : "",
+        userId: course.courseInstructor,
+        isInstructorRecieving: true,
+      }
+      await pushNotify(notificationOptions)
+      //email instructor
       await sendEmailToOneUser({
         userId: course.courseInstructor,
         course,
@@ -1031,6 +1054,16 @@ module.exports = {
         course: instructorTest.course,
       });
       if (isSendNotifications) notification.save();
+
+      //push notification
+      const notificationOptions = {
+        multipleUsers: false,
+        content: 'workExcused',
+        test: instructorTest,
+        userId: student,
+        isStudentRecieving: true,
+      }
+      await pushNotify(notificationOptions)
 
       await sendEmailToOneUser({
         userId: student,

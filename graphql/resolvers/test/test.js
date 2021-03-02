@@ -20,7 +20,10 @@ const moment = require("moment");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
 const { updateClassAverage } = require("../../../util/updateClassAverage");
-//reset
+const webpush = require('web-push')
+const { i18n } = require("../../../i18n.config");
+const { pushNotify } = require("../../../util/pushNotification");
+
 module.exports = {
   createTest: async function (
     {
@@ -32,7 +35,6 @@ module.exports = {
     },
     req
   ) {
-    console.log('creating test')
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -225,6 +227,15 @@ module.exports = {
             return rq.student;
           }
         });
+        //push notifications
+        const notificationOptions = {
+          multipleUsers:true,
+          users:studentIdsEnrolled,
+          content:'newWorkPosted',
+          course:course,
+          test:createdTest,
+        }
+        await pushNotify(notificationOptions)
         await sendEmailsToStudents({
           studentIdsEnrolled,
           course,
@@ -237,7 +248,6 @@ module.exports = {
             : "isTestEmails",
         });
       }
-
     }
 
     io.getIO().emit("updateCourses", {
@@ -258,7 +268,6 @@ module.exports = {
     },
     req
   ) {
-    console.log('updating test')
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -534,11 +543,11 @@ module.exports = {
     test.blockedNotes = testInput.blockedNotes;
     test.notes = xss(testInput.notes, noHtmlTags);
     const updatedTest = await test.save();
-    console.log('switches: ',(testPostedContent || content.length > 0),notification,isSendNotifications)
+    console.log('switches: ', (testPostedContent || content.length > 0), notification, isSendNotifications)
     if ((testPostedContent || content.length > 0) && notification && isSendNotifications) {
       console.log('saving notif')
-     const result = await notification.save();
-     console.log('result',result)
+      const result = await notification.save();
+      console.log('result', result)
     }
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
@@ -552,6 +561,16 @@ module.exports = {
           return rq.student;
         }
       });
+
+      //push notifications
+      const notificationOptions = {
+        multipleUsers:true,
+        users:studentIdsEnrolled,
+        content:'workUpdatedSubject',
+        course:course,
+        test:updatedTest,
+      }
+      await pushNotify(notificationOptions)
 
       await sendEmailsToStudents({
         studentIdsEnrolled,
@@ -896,12 +915,23 @@ module.exports = {
         course: test.course,
         message,
       });
-
-      //8. delete appropriate s3 directory
+      //8. push notification
+      const notificationOptions = {
+        multipleUsers:false,
+        // users:studentIdsEnrolled,
+        userId:studentId,
+        content:'workReset',
+        course:course,
+        test:test,
+        isStudentRecieving:true,
+        student:student,
+      }
+      await pushNotify(notificationOptions)
+      //9. delete appropriate s3 directory
       const resultDirectory = `courses/${test.course}/tests/${testId}/results/${result._id}`;
       await emptyS3Directory(resultDirectory);
       await student.save();
-      if(isSendNotifications)await notification.save();
+      if (isSendNotifications) await notification.save();
 
       //9. email student
       if (
@@ -921,7 +951,6 @@ module.exports = {
         });
       }
       const ave = await updateClassAverage(test)
-      console.log('ave: ',ave)
       test.classAverage = Number.isNaN(ave) ? 0 : ave;
       await test.save();
 
@@ -1010,20 +1039,27 @@ module.exports = {
       documentId: test._id,
       course: test.course,
     });
-    console.log('isSendNotifications',isSendNotifications)
-    if(isSendNotifications) await notification.save();
+    console.log('isSendNotifications', isSendNotifications)
+    if (isSendNotifications) await notification.save();
 
     await emptyS3Directory(resultDirectory);
-
+    const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+      if (rq.approved) {
+        return rq.student;
+      }
+    });
+    const notificationOptions = {
+      multipleUsers:true,
+      users:studentIdsEnrolled,
+      content:'workResetSubject',
+      course:course,
+      test:test,
+    }
+    await pushNotify(notificationOptions)
     if (
       (isSendTestEmails && !test.assignment) ||
       (isSendAssignmentEmails && test.assignment)
     ) {
-      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-        if (rq.approved) {
-          return rq.student;
-        }
-      });
       await sendEmailsToStudents({
         studentIdsEnrolled,
         course,
@@ -1033,7 +1069,7 @@ module.exports = {
         condition: test.assignment ? "isAssignmentEmails" : "isTestEmails",
       });
     }
-    
+
     test.classAverage = 0
     await test.save();
 

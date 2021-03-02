@@ -16,6 +16,7 @@ const { updateUrls } = require("../../../util/getUpdatedUrls");
 const { emptyS3Directory, getObjectUrl } = require("../../../s3");
 const moment = require("moment");
 const { sendEmailsToStudents } = require("../../../util/email-students");
+const { pushNotify } = require("../../../util/pushNotification");
 
 module.exports = {
   createLesson: async function ({ lessonInput }, req) {
@@ -101,6 +102,20 @@ module.exports = {
     await course.save();
     if (instructorConfig.isSendLessonNotifications) await notification.save();
     const isSendEmails = instructorConfig.isSendLessonEmails;
+
+    const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+      if (rq.approved) {
+        return rq.student;
+      }
+    });
+    const notificationOptions = {
+      multipleUsers:true,
+      users:studentIdsEnrolled,
+      content:'newLessonSubject',
+      course:course,
+      lesson:createdLesson,
+    }
+    await pushNotify(notificationOptions)
     if (isSendEmails) {
       let content = "newLesson";
       let subject = "newLessonSubject";
@@ -109,11 +124,6 @@ module.exports = {
         date = new Date(lessonInput.availableOnDate).getTime()
         content = "newLessonLaterDate";
       }
-      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-        if (rq.approved) {
-          return rq.student;
-        }
-      });
 
         await sendEmailsToStudents({
           studentIdsEnrolled,
@@ -274,6 +284,22 @@ module.exports = {
 
     }
 
+    const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+      if (rq.approved) {
+        return rq.student;
+      }
+    });
+    const notificationOptions = {
+      multipleUsers:true,
+      users:studentIdsEnrolled,
+      content:!lesson.published ? 'newLessonSubject' : 'lessonUpdatedSubject',
+      course:course,
+      lesson,
+    }
+    if(lessonInput.published) {
+      await pushNotify(notificationOptions)
+    }
+
     const isSendEmails = instructorConfig.isSendLessonEmails;
     if (isSendEmails && lessonInput.published) {
       let content = "lessonUpdated";
@@ -291,11 +317,6 @@ module.exports = {
           content = "newLessonLaterDate"
       }
 
-      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-        if (rq.approved) {
-          return rq.student;
-        }
-      });
       await sendEmailsToStudents({
         studentIdsEnrolled,
         course,

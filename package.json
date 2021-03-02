@@ -42,6 +42,7 @@
     "sticky-session": "^1.1.2",
     "uuid": "^8.2.0",
     "validator": "^12.1.0",
+    "web-push": "^3.4.4",
     "xss": "^1.0.7"
   },
   "devDependencies": {

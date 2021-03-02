@@ -29,6 +29,7 @@ module.exports = {
       )
         .reverse()
         .map(async (n) => {
+          const course = await Course.findById(n.course);
           const seen = (n.usersSeen || []).includes(req.userId.toString());
           //filter notifications according to users config settings
           if (

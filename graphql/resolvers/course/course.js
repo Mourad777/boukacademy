@@ -26,7 +26,8 @@ const { clearHash } = require("../../../util/cache");
 const lodash = require("lodash");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-//admin
+const {pushNotify} = require("../../../util/pushNotification")
+
 module.exports = {
   createCourse: async function ({ courseInput }, req) {
     if (!req.instructorIsAuth) {
@@ -198,6 +199,18 @@ module.exports = {
 
     const updatedCourse = await course.save();
     let courseDropDeadlineNotification;
+    const admin = await Instructor.findOne({ admin: true }).populate(
+      "configuration"
+    );
+    const adminSettings = admin._doc.configuration;
+    const grade = adminSettings.dropCourseGrade
+    const isDropCoursePenalty = adminSettings.isDropCoursePenalty
+    const notificationOptions = {
+      users:studentIdsEnrolled,
+      multipleUsers:true,
+      course:course,
+      grade:grade,
+    }
     if (
       (prevDropDeadline || "").toString() !==
       (currDropDeadline || "").toString()
@@ -210,13 +223,16 @@ module.exports = {
         documentId: course._id,
         course: course._id,
       });
+      //push notifications
+    
+     await pushNotify({...notificationOptions,content:isDropCoursePenalty ? "courseDropDeadline" : "courseDropDeadlineChanged",})
       if (isSendEmails) {
         const content = "courseDropDeadline";
         const subject = "courseDropDeadlineChanged";
         await sendEmailsToStudents({
           studentIdsEnrolled,
           course: updatedCourse,
-          content,
+          content:isDropCoursePenalty ? content : subject,
           subject,
           condition: 'isCourseEmails'
         });
@@ -237,6 +253,7 @@ module.exports = {
         documentId: course._id,
         course: course._id,
       });
+      await pushNotify({...notificationOptions,content:"officeHoursUpdatedFor",})
       if (isSendEmails) {
         const content = "officeHoursUpdatedFor";
         const subject = "officeHoursUpdated";
@@ -1076,6 +1093,14 @@ module.exports = {
     // await student.save();
     await course.save();
     await notification.save();
+    const notificationOptions = {
+      multipleUsers:false,
+      course:course,
+      userId:course.courseInstructor,
+      isInstructorRecieving:true,
+      student,
+    }
+    await pushNotify({...notificationOptions,content:"courseEnrollRequest"})
     await sendEmailToOneUser({
       userId: course.courseInstructor,
       course,
@@ -1204,6 +1229,19 @@ module.exports = {
     await student.save();
     await course.save();
     if (isSendNotifications || !instructor) await notification.save();
+    let userId;
+    if(!!instructor)userId = student._id
+    if(!instructor)userId = course.courseInstructor
+    const notificationOptions = {
+      multipleUsers:false,
+      content:!!instructor ? "courseEnrollApprove" : 'autoEnroll',
+      course:course,
+      userId,
+      student,
+      isStudentRecieving:!!instructor,
+      isInstructorRecieving:!instructor,
+    }
+    await pushNotify(notificationOptions)
     if (isSendEmails || !instructor) {
       await sendEmailToOneUser({
         userId: !!instructor ? studentId : course.courseInstructor,
@@ -1323,6 +1361,14 @@ module.exports = {
     await student.save();
     if (isSendNotifications) await notification.save();
     clearHash(course._id);
+    const notificationOptions = {
+      multipleUsers:false,
+      content: 'courseEnrollDeny',
+      course:course,
+      userId:studentId,
+      isStudentRecieving:true,
+    }
+    await pushNotify(notificationOptions)
     if (isSendEmails) {
       await sendEmailToOneUser({
         userId: studentId,
@@ -1441,6 +1487,15 @@ module.exports = {
     const studentWithNewCourse = await student.save();
     await course.save();
     clearHash(course._id);
+    const notificationOptions = {
+      multipleUsers:false,
+      content: 'courseDrop',
+      course:course,
+      userId:course.courseInstructor,
+      isInstructorRecieving:true,
+      student,
+    }
+    await pushNotify(notificationOptions)
     await sendEmailToOneUser({
       userId: course.courseInstructor,
       course,
@@ -1584,6 +1639,17 @@ module.exports = {
     await student.save();
     await course.save();
     if (isSendNotifications) await notification.save();
+    const notificationOptions = {
+      multipleUsers:false,
+      content: notificationContent[0],
+      course:course,
+      userId:studentId,
+      isStudentRecieving:true,
+      student,
+      passed,
+      grade,
+    }
+    await pushNotify(notificationOptions)
     if (isSendEmails) {
       await sendEmailToOneUser({
         userId: studentId,

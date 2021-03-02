@@ -53,9 +53,9 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
-  language:{
-    type:String,
-    required:true,
+  language: {
+    type: String,
+    required: true,
   },
   isAccountApproved: {
     type: Boolean,
@@ -64,6 +64,26 @@ const UserSchema = new mongoose.Schema({
   isAccountSuspended: {
     type: Boolean,
     required: true,
+  },
+  notificationSubscription: {
+    endpoint: {
+      type: String,
+      required: false,
+    },
+    expirationTime: {
+      type: Number,
+      required: false,
+    },
+    keys: {
+      p256dh: {
+        type: String,
+        required: false,
+      },
+      auth: {
+        type: String,
+        required: false,
+      }
+    }
   },
   configuration: { type: mongoose.Schema.Types.ObjectId, ref: "Configuration" },
 });
