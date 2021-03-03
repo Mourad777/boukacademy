@@ -7,6 +7,9 @@ self.addEventListener('push',e=>{
     const isIM = data.isIM
     self.registration.showNotification(data.title, {
         body:data.body,
-        icon:isIM ? data.icon : '/logo512.png'
+        icon:isIM ? data.icon : '/logo512.png',
+        data: {
+            url: data.url
+          }
     })
 })
