@@ -57,22 +57,29 @@ app.use((req, res, next) => {
   }
   next();
 });
+//fixes mime type service worker issue in firefox and edge
+app.get("/custom-service-worker.js", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "public", "service-worker.js"));
+});
+app.get("*", function response(req, res) {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 app.use(auth);
 
-webpush.setVapidDetails('mailto:mourad777b@gmail.com',publicVapidKey,privateVapidKey)
+webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVapidKey)
 
-app.post('/subscribe',async(req,res)=>{
+app.post('/subscribe', async (req, res) => {
   const subscription = req.body
-  console.log('subscription',subscription)
-  console.log('req.userId',req.userId)
+  console.log('subscription', subscription)
+  console.log('req.userId', req.userId)
   let userType;
-  if(req.instructorIsAuth){
+  if (req.instructorIsAuth) {
     userType = 'instructor'
   }
-  if(req.studentIsAuth){
+  if (req.studentIsAuth) {
     userType = 'student'
   }
-  if(req.userId){
+  if (req.userId) {
     const user = await require(`./models/${userType}`).findById(req.userId)
     user.notificationSubscription = subscription
     await user.save()
@@ -133,18 +140,18 @@ app.put("/upload", async (req, res, next) => {
   };
   const tagKey = 'fileType';
   const tagValue = fileType;
-    s3.createPresignedPost(params, (err, data) => {
-      res.send({
-        uploaded: 1,
-        presignedUrl: {
-          ...data,
-          fields: {
-            ...data.fields,
-            tagging: `<Tagging><TagSet><Tag><Key>${tagKey}</Key><Value>${tagValue}</Value></Tag></TagSet></Tagging>`,
-          },
+  s3.createPresignedPost(params, (err, data) => {
+    res.send({
+      uploaded: 1,
+      presignedUrl: {
+        ...data,
+        fields: {
+          ...data.fields,
+          tagging: `<Tagging><TagSet><Tag><Key>${tagKey}</Key><Value>${tagValue}</Value></Tag></TagSet></Tagging>`,
         },
-      });
+      },
     });
+  });
 });
 
 app.put("/get-file", async (req, res, next) => {
