@@ -26,6 +26,7 @@ const pushNotify = async ({
     await Promise.all(users.map(async stId => {
       console.log('stid: ', stId)
       const student = await Student.findById(stId);
+      if(!student)return
       i18n.setLocale(student.language);
       const notificationTitle =i18n.__(content, {
         courseName: (course || {}).courseName,
