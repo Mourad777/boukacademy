@@ -35,18 +35,15 @@ const pushNotify = async ({
         testOrAssignment:(test||{}).assignment
         ? i18n.__("assignment")
         : i18n.__("test"),
-        aOrAn: test.assignment ? 'an' : 'a',
+        aOrAn: (test||{}).assignment ? 'an' : 'a',
       });
       const payload = JSON.stringify({ title: notificationTitle });
-      console.log('found student: ', student)
       const plainStudentObject = student.toObject()
       webpush.sendNotification(plainStudentObject.notificationSubscription, payload).catch(e => console.error(e));
     }))
   } else {
     const firstName = (student||{}).firstName || (instructor||{}).firstName
     const lastName = (student||{}).lastName || (instructor||{}).lastName
-    console.log('isStudentRecieving',isStudentRecieving)
-    console.log('isInstructorRecieving',isInstructorRecieving)
     let user;
     const noRecievingStudentNorRecievingInstructorProvided = !isStudentRecieving && !isInstructorRecieving
     if (isStudentRecieving || noRecievingStudentNorRecievingInstructorProvided) {
@@ -55,8 +52,6 @@ const pushNotify = async ({
     if (isInstructorRecieving || noRecievingStudentNorRecievingInstructorProvided && !user) {
       user = await Instructor.findById(userId);
     }
-    console.log('userId',userId)
-    console.log('user: ',user)
     i18n.setLocale(user.language);
     let passOrFail = ''
     if(passed === true) passOrFail = i18n.__("passed")
@@ -75,12 +70,10 @@ const pushNotify = async ({
     }) : content
     const plainUserObject = user.toObject()
     let payload = JSON.stringify({ title: notificationTitle });
+    console.log('imSender',imSender)
     if(isIM) {
-      const userIcon = await getObjectUrl(imSender.profilePicture);
-      console.log('user icon: ',userIcon)
-      console.log('notificationTitle',notificationTitle)
       payload = JSON.stringify({ 
-      title:isImSenderInstructor ? i18n.__("newMessageFromInstructor") : i18n.__("newMessageFromStudent",imSender.firstName),
+      title:isImSenderInstructor ? i18n.__("newMessageFromInstructor") : i18n.__("newMessageFromStudent",{firstName:imSender.firstName}),
       body:notificationTitle,
       icon: await getObjectUrl(imSender.profilePicture),
       isIM:true,

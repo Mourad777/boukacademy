@@ -60,7 +60,6 @@ module.exports = {
         { userId, reason },
         req
     ) { 
-        console.log('reason', reason)
         const reasonClean = xss(reason, noHtmlTags);
         //verify that admin is making the request
         const userMakingRequest = await Instructor.findById(req.userId)

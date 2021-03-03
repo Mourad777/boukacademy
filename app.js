@@ -39,11 +39,6 @@ require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
 
-
-const Result = require('./models/result')
-const Test = require('./models/test');
-const { sub } = require("./graphql/schemas/index");
-
 const multerUpload = multer().any();
 
 app.use(multerUpload);
@@ -67,7 +62,6 @@ app.use(auth);
 webpush.setVapidDetails('mailto:mourad777b@gmail.com',publicVapidKey,privateVapidKey)
 
 app.post('/subscribe',async(req,res)=>{
-  console.log('in subscribe')
   const subscription = req.body
   console.log('subscription',subscription)
   console.log('req.userId',req.userId)
@@ -80,7 +74,6 @@ app.post('/subscribe',async(req,res)=>{
   }
   if(req.userId){
     const user = await require(`./models/${userType}`).findById(req.userId)
-    console.log('user: ',user)
     user.notificationSubscription = subscription
     await user.save()
   }

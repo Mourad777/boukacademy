@@ -543,11 +543,8 @@ module.exports = {
     test.blockedNotes = testInput.blockedNotes;
     test.notes = xss(testInput.notes, noHtmlTags);
     const updatedTest = await test.save();
-    console.log('switches: ', (testPostedContent || content.length > 0), notification, isSendNotifications)
     if ((testPostedContent || content.length > 0) && notification && isSendNotifications) {
-      console.log('saving notif')
       const result = await notification.save();
-      console.log('result', result)
     }
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
@@ -1039,7 +1036,6 @@ module.exports = {
       documentId: test._id,
       course: test.course,
     });
-    console.log('isSendNotifications', isSendNotifications)
     if (isSendNotifications) await notification.save();
 
     await emptyS3Directory(resultDirectory);

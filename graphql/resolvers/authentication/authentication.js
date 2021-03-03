@@ -124,7 +124,6 @@ module.exports = {
     const foundAdmin = await Instructor.findOne({ admin: true });
     const shouldCreateAdmin =
       !foundAdmin && accountInput.accountType === "instructor";
-    console.log('e');
     const admin = await Instructor.findOne({ admin: true }).populate(
       "configuration"
     );
