@@ -78,6 +78,7 @@ const pushNotify = async ({
       body:notificationTitle,
       icon: await getObjectUrl(imSender.profilePicture),
       isIM:true,
+      url:process.env.APP_URL
     });
     }
     webpush.sendNotification(plainUserObject.notificationSubscription, payload).catch(e => console.error(e));
