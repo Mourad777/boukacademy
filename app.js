@@ -57,13 +57,13 @@ app.use((req, res, next) => {
   }
   next();
 });
-//fixes mime type service worker issue in firefox and edge
-app.get("/custom-service-worker.js", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "public", "custom-service-worker.js"));
-});
-app.get("*", function response(req, res) {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+// //fixes mime type service worker issue in firefox and edge
+// app.get("/custom-service-worker.js", (req, res) => {
+//   res.sendFile(path.resolve(__dirname, "public", "custom-service-worker.js"));
+// });
+// app.get("*", function response(req, res) {
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
 app.use(auth);
 
 webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVapidKey)
