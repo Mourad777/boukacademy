@@ -32,12 +32,12 @@ const pushNotify = async ({
   if (multipleUsers) {
     await Promise.all(users.map(async stId => {
       const student = await Student.findById(stId);
-
+      if (!student) return;
       const studentConfig = await Configuration.findOne({ user: stId });
+      if(!studentConfig)return;
       const isRecievePushNotifications = studentConfig[condition];
 
-      if (!student) return;
-
+    
       if (isRecievePushNotifications) {
         i18n.setLocale(student.language);
         const notificationTitle = i18n.__(content, {
@@ -71,6 +71,7 @@ const pushNotify = async ({
     }
     i18n.setLocale(user.language);
     const userConfig = await Configuration.findOne({ user: userId });
+    if(!userConfig)return;
     let isRecievePushNotifications;
     if (condition) {
       isRecievePushNotifications = userConfig[condition];
