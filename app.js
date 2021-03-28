@@ -119,7 +119,12 @@ app.put("/upload", async (req, res, next) => {
     "mkv",
     "webm",
   ];
-  if (!acceptedExtensions.includes(fileExtension)) {
+
+  const capitializedExtenstions = acceptedExtensions.map(ext=>ext.toUpperCase());
+
+  const allExtensions = [...acceptedExtensions,...capitializedExtenstions];
+  console.log('allExtensions',allExtensions)
+  if (!allExtensions.includes(fileExtension)) {
     return res.status(401).json({ message: "File type not allowed" });
   }
 
