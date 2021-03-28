@@ -93,6 +93,7 @@ app.post('/subscribe', async (req, res) => {
 })
 
 app.put("/upload", async (req, res, next) => {
+  console.log('!req.instructorIsAuth && !req.studentIsAuth',!req.instructorIsAuth && !req.studentIsAuth)
   if (!req.instructorIsAuth && !req.studentIsAuth) {
     return res.status(401).json({ message: "Not authenticated!" });
   }
