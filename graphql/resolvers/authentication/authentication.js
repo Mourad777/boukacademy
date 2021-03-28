@@ -20,6 +20,7 @@ const bson = require('bson');
 //SESSION_REFRESH_TIME_LIMIT is for the automatic logout of the session regardless of inactivity
 module.exports = {
   userLogin: async function ({ email, password, userType, notificationSubscription }, req) {
+    console.log('notificationSubscription',notificationSubscription)
     //check if user has account userId
     console.log('check -1')
     console.log('req.isGoogleAuth',req.isGoogleAuth)
