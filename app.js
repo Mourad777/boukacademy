@@ -241,77 +241,76 @@ mongoose
 
 
 
-    // const admin = await Instructor.findOne({ admin: true });
-    // const instructors = await Instructor.find({ admin: false });
-    // const students = await Student.find()
+    const admin = await Instructor.findOne({ admin: true });
+    const instructors = await Instructor.find({ admin: false });
+    const students = await Student.find()
 
-    // const adminId = admin._id;
-    // const instructorIds = instructors.map(ins => ins._id);
-    // const studentIds = students.map(stu => stu._id);
-    // console.log('adminId: ', adminId._id);
-    // console.log('instructorIds :', instructorIds);
-    // console.log('studentIds', studentIds)
-
-
+    const adminId = admin._id;
+    const instructorIds = instructors.map(ins => ins._id);
+    const studentIds = students.map(stu => stu._id);
+    console.log('adminId: ', adminId._id);
+    console.log('instructorIds :', instructorIds);
+    console.log('studentIds', studentIds)
 
 
-    // await Configuration.updateMany({ user: adminId }, {
-    //   isChatPushNotifications: true,
 
-    //   isAssignmentPushNotifications: true,
-    //   isTestPushNotifications: true,
-    //   isChatPushNotifications: true,
 
-    //   isEnrollPushNotifications: true,
-    //   isDropCoursePushNotifications: true,
+    await Configuration.updateMany({ user: adminId }, {
+      isChatPushNotifications: true,
 
-    //   isNewInstructorAccountPushNotifications:true,
-    //   isNewStudentAccountPushNotifications:true,
+      isAssignmentPushNotifications: true,
+      isTestPushNotifications: true,
 
-    //   isSendTestPushNotifications: true,
-    //   isSendLessonPushNotifications: true,
-    //   isSendAssignmentPushNotifications: true,
-    //   isSendCoursePushNotifications: true,
-    //   isStayLoggedIn:true,
+      isEnrollPushNotifications: true,
+      isDropCoursePushNotifications: true,
 
-    // }, { multi: true });
+      isNewInstructorAccountPushNotifications:true,
+      isNewStudentAccountPushNotifications:true,
 
-    // await Promise.all(
-    //   instructorIds.map(async instId => {
-    //     await Configuration.updateMany({ user: instId }, {
+      isSendTestPushNotifications: true,
+      isSendLessonPushNotifications: true,
+      isSendAssignmentPushNotifications: true,
+      isSendCoursePushNotifications: true,
+      isStayLoggedIn:true,
 
-    //       isSendTestPushNotifications: true,
-    //       isSendLessonPushNotifications: true,
-    //       isSendAssignmentPushNotifications: true,
-    //       isSendCoursePushNotifications: true,
+    }, { multi: true });
 
-    //       isAssignmentPushNotifications: true,
-    //       isTestPushNotifications: true,
-    //       isChatPushNotifications: true,
+    await Promise.all(
+      instructorIds.map(async instId => {
+        await Configuration.updateMany({ user: instId }, {
 
-    //       isEnrollPushNotifications: true,
-    //       isDropCoursePushNotifications: true,
+          isSendTestPushNotifications: true,
+          isSendLessonPushNotifications: true,
+          isSendAssignmentPushNotifications: true,
+          isSendCoursePushNotifications: true,
 
-    //       isStayLoggedIn:true,
-    //     }, { multi: true })
-    //   })
-    // )
+          isAssignmentPushNotifications: true,
+          isTestPushNotifications: true,
+          isChatPushNotifications: true,
 
-    // await Promise.all(
-    //   studentIds.map(async stuId => {
-    //     await Configuration.updateMany({ user: stuId }, {
+          isEnrollPushNotifications: true,
+          isDropCoursePushNotifications: true,
 
-    //       isCoursePushNotifications: true,
-    //       isLessonPushNotifications: true,
-    //       isAssignmentPushNotifications: true,
-    //       isTestPushNotifications: true,
-    //       isChatPushNotifications: true,
+          isStayLoggedIn:true,
+        }, { multi: true })
+      })
+    )
 
-    //       isStayLoggedIn:true,
+    await Promise.all(
+      studentIds.map(async stuId => {
+        await Configuration.updateMany({ user: stuId }, {
 
-    //     }, { multi: true })
-    //   })
-    // )
+          isCoursePushNotifications: true,
+          isLessonPushNotifications: true,
+          isAssignmentPushNotifications: true,
+          isTestPushNotifications: true,
+          isChatPushNotifications: true,
+
+          isStayLoggedIn:true,
+
+        }, { multi: true })
+      })
+    )
 
     // isCoursePushNotifications
     // isLessonPushNotifications

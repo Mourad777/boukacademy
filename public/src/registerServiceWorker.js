@@ -30,7 +30,6 @@ export default function register() {
     }
 
     window.addEventListener('load', () => {
-      console.log('in server sw process.env.PUBLIC_URL',process.env.PUBLIC_URL)
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
       if (isLocalhost) {
