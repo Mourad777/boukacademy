@@ -142,7 +142,7 @@ const onJoin = (socket) => {
       ],
     })
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(20);
     // .cache({ key: dmRoom });
 
     if (retrievedMessages) {
