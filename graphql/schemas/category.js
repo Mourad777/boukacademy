@@ -30,6 +30,7 @@ module.exports = buildSchema(`
     type Category {
         modules:[Module]
         _id:ID
+        course:ID
     }
 
     input TopicInputData {

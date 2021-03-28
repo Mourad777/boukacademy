@@ -5,6 +5,7 @@ const { sendEmailToOneUser } = require("../../../util/email-user");
 const { noHtmlTags } = require("../validation/xssWhitelist");
 require("dotenv").config();
 const xss = require("xss");
+const { pushNotify } = require("../../../util/pushNotification");
 
 module.exports = {
     activateAccount: async function ({ userId }, req) {
@@ -15,7 +16,7 @@ module.exports = {
             throw error;
         }
 
-        let user,userType;
+        let user, userType;
         const instructor = await Instructor.findById(userId)
         const student = await Student.findById(userId)
         if (instructor) {
@@ -26,6 +27,7 @@ module.exports = {
             user = student
             userType = 'student'
         }
+        const url = `${userType}-panel/courses`
         if (!user) {
             const error = new Error("No user found");
             error.code = 401;
@@ -40,18 +42,33 @@ module.exports = {
             await user.save()
             await sendEmailToOneUser({
                 userId,
-                course:null,
-                subject:"accountActivatedSubject",
-                content:"accountActivated",
+                course: null,
+                subject: "accountActivatedSubject",
+                content: "accountActivated",
                 student,
                 instructor,
-                condition:null,
+                condition: null,
                 userType,
-              });
+                buttonText:"yourAccount",
+                buttonUrl:url,
+            });
+
+            const notificationOptions = {
+                multipleUsers: false,
+                content: 'accountActivated',
+                userId,
+                isStudentRecieving: userType ==='student',
+                isInstructorRecieving: userType ==='instructor',
+                instructor,
+                student,
+                url,
+                condition: null,
+            }
+            await pushNotify(notificationOptions)
             io.getIO().emit("activateAccount", {
                 userId,
             });
-            return "account reactivated"
+            return "account activated"
         }
     },
 
@@ -59,16 +76,16 @@ module.exports = {
     suspendAccount: async function (
         { userId, reason },
         req
-    ) { 
+    ) {
         const reasonClean = xss(reason, noHtmlTags);
         //verify that admin is making the request
-        const userMakingRequest = await Instructor.findById(req.userId)
+        const userMakingRequest = await Instructor.findById(req.userId);
         if (!userMakingRequest.admin) {
             const error = new Error("Unauthorized access, only admin is allowed to suspend or re-activate accounts");
             error.code = 403;
             throw error;
         }
-        let user,userType;
+        let user, userType;
         const instructor = await Instructor.findById(userId)
         const student = await Student.findById(userId)
         if (instructor) {
@@ -93,17 +110,34 @@ module.exports = {
             user.isAccountSuspended = true;
         }
         await user.save()
+
+        const url = `${userType}-panel/courses`
         await sendEmailToOneUser({
             userId,
-            course:null,
-            subject:content+'Subject',
+            course: null,
+            subject: content + 'Subject',
             content,
-            secondaryContent:reasonClean||'',
+            secondaryContent: reasonClean || '',
             student,
             instructor,
-            condition:null,
+            condition: null,
             userType,
-          });
+            buttonText:content === "accountReactivated" ? "yourAccount" : "",
+            buttonUrl:url,
+        });
+
+        const notificationOptions = {
+            multipleUsers: false,
+            content,
+            userId,
+            isStudentRecieving: userType === 'student',
+            isInstructorRecieving: userType === 'instructor',
+            instructor,
+            student,
+            url,
+            condition: null,
+        }
+        await pushNotify(notificationOptions)
         if (user.isAccountSuspended) {
             io.getIO().emit("suspendAccount", {
                 userId,

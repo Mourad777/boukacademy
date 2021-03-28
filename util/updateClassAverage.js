@@ -8,6 +8,7 @@ const updateClassAverage = async (test) => {
         isExcused:false,
       });
       const gradeSum = allResults.reduce((prev, curr) => prev + curr.grade, 0);
+      console.log('gradeSum',gradeSum, '/', 'allResults.length',allResults.length)
       const classAverage = parseFloat(
         (gradeSum / allResults.length).toFixed(2)
       );

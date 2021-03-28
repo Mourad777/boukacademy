@@ -73,6 +73,13 @@ const updateTestUrls = async (test) => {
       audio: fixedAudio,
     };
   }));
+  const fixedVideoMaterials = await Promise.all(test.videoMaterials.map(async (material) => {
+    const fixedVideo = material.video ? await getObjectUrl(material.video) : material.video
+    return {
+      ...material._doc,
+      video: fixedVideo,
+    };
+  }));
   return {
     ...test._doc,
     _id: test._id.toString(),
@@ -80,8 +87,9 @@ const updateTestUrls = async (test) => {
     essayQuestions: fixedEssayQuestions,
     speakingQuestions: fixedSpeakingQuestions,
     fillInBlanksQuestions: { blanks: fixedBlanks, text: fixedFillBlankText },
-    readingMaterials:fixedReadingMaterials,
-    audioMaterials:fixedAudioMaterials,
+    readingMaterials: fixedReadingMaterials,
+    audioMaterials: fixedAudioMaterials,
+    videoMaterials: fixedVideoMaterials,
   };
 };
 

@@ -22,6 +22,7 @@ const { sendEmailToOneUser } = require("../../../util/email-user");
 const { updateClassAverage } = require("../../../util/updateClassAverage");
 const { i18n } = require("../../../i18n.config");
 const { pushNotify } = require("../../../util/pushNotification");
+const { getReadableDate } = require("../../../util/getReadableDate");
 
 module.exports = {
   testResults: async function ({ }, req) {
@@ -86,6 +87,7 @@ module.exports = {
     //starting a test or assignment
     //continuing test or assignment
     //fetching test to be reviewed
+    console.log('fetching test..........................................')
     if (!req.studentIsAuth && !req.instructorIsAuth) {
       const error = new Error("Neither student nor instructor authenticated");
       error.code = 401;
@@ -144,6 +146,8 @@ module.exports = {
       return { test: adjustedTest };
     }
 
+    //CASE FOR STUDENT FETCHING TEST TO START IT OR REVIEW IT AFTER ITS BEEN GRADED
+    console.log('check 1')
     if (!student.coursesEnrolled.includes(test.course.toString())) {
       const error = new Error(
         "Student not authorized. Not enrolled in the course!"
@@ -162,6 +166,16 @@ module.exports = {
     ).getTime();
     if (availableOnDate > Date.now()) {
       const error = new Error("The test or assignment is not available yet");
+      error.code = 403;
+      throw error;
+    }
+    if ((dueDate < Date.now()) && !test.assignment) {
+      const error = new Error("The test is past due");
+      error.code = 403;
+      throw error;
+    }
+    if (((dueDate + (test.lateDaysAllowed * 86400000)) < Date.now()) && test.assignment) {
+      const error = new Error("The assignment is past due");
       error.code = 403;
       throw error;
     }
@@ -202,6 +216,7 @@ module.exports = {
     //close test
     //this happens when student logsout before the timer expires or before the due date is reached
     //and does not log back in before that time to let the test submit
+    console.log('check 2')
     const isPastDue =
       new Date((student.testInSession || {}).endTime).getTime() + 15000 <
       Date.now(); //give extra 15 seconds for slow networks
@@ -257,7 +272,7 @@ module.exports = {
         throw error;
       }
     }
-
+    console.log('check 3')
     const startDate = new Date(
       (test.availableOnDate || "").toString()
     ).getTime();
@@ -358,6 +373,7 @@ module.exports = {
         };
       })
     );
+    console.log('check 4')
     const testStartTime = Date.now();
     const testEndTime = Date.now() + test.timer * 1000 * 60;
     const testCloseDate = new Date((test.dueDate || "").toString()).getTime();
@@ -387,7 +403,11 @@ module.exports = {
       );
 
       const adminSettings = admin._doc.configuration;
-
+      if (adminSettings.isPasswordRequiredStartTest && !student.password) {
+        const error = new Error("You must create a login password before starting the test");
+        error.code = 401;
+        throw error;
+      }
       if (adminSettings.isPasswordRequiredStartTest) {
         //if admin requires password check
         const isEqual = await bcrypt.compare(password, student.password);
@@ -414,9 +434,11 @@ module.exports = {
       }
       //if the due date is sooner than Date.now() + timer use the due date
       await student.save();
+      console.log('check 5')
       io.getIO().emit("updateStudents", {
         userType: "instructor",
-        courseId: test.course,
+        // courseId: test.course,
+        userId: course.courseInstructor,
       });
     }
 
@@ -435,9 +457,18 @@ module.exports = {
       student.assignmentsInSession.push(assignmentInSession);
       await student.save();
     }
+    console.log('check 6')
     //notify the instructor in real-time that the test has started
     const fixedTest = await updateTestUrls(test);
     //giving the student a test with hidden answers
+    if (test.assignment) {
+      io.getIO().emit("updateStudents", {
+        userType: "instructor",
+        // courseId: test.course,
+        userId: course.courseInstructor,
+      });
+    }
+
     return {
       test: {
         ...fixedTest,
@@ -520,6 +551,9 @@ module.exports = {
     const isSendNotifications = (instructorConfig.isSendTestNotifications && !test.assignment) || (instructorConfig.isSendAssignmentNotifications && test.assignment)
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
+
+    const isSendTestPushNotifications = instructorConfig.isSendTestPushNotifications;
+    const isSendAssignmentPushNotifications = instructorConfig.isSendAssignmentPushNotifications;
 
     if (!req.instructorIsAuth && !req.studentIsAuth) {
       const error = new Error(
@@ -795,8 +829,9 @@ module.exports = {
         }
         if (!isGradeReleaseDate && gradeReleaseDate && !result.graded) {
           content = "workGradedLaterDate";
-          workGradedSubject = "workGradedSubject";
+          gradedSubject = "workGradedSubject";
         }
+
         notification = new Notification({
           toUserType: "unique",
           toSpecificUser: studentId,
@@ -825,39 +860,57 @@ module.exports = {
       await result.save();
       if (content && isSendNotifications) await notification.save();
       //update test class average
-
-      test.classAverage = await updateClassAverage(test)
+      const updatedClassAverage = await updateClassAverage(test);
+      test.classAverage = isNaN(updatedClassAverage) ? 0 : updatedClassAverage;
       if (graded) await test.save();
-
+      const date = new Date(test.gradeReleaseDate).getTime();
+      const docUrl = isGradeReleaseDate ? `student-panel/course/${test.course}/completed-tests/${test._id}` : `student-panel/course/${test.course}/completed-tests`;
+      const emailCondition = test.assignment ? "isAssignmentEmails" : "isTestEmails";
+      const pushCondition = test.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
       //push notification
       const notificationOptions = {
         multipleUsers: false,
-        content: 'workGraded',
+        content,
         test: test,
+        date: getReadableDate(date, student.language),
         grade: result.grade,
         passed: test.passingGrade ? test.passingGrade < result.grade ? true : false : "",
         userId: studentId,
         isStudentRecieving: true,
+        url: docUrl,
+        condition: pushCondition,
       }
-      if (
-        ((isSendTestEmails && !test.assignment) ||
-          (isSendAssignmentEmails && test.assignment)) &&
-        req.instructorIsAuth
-      ) {
-        await pushNotify(notificationOptions)
-        await sendEmailToOneUser({
-          userId: studentId,
-          course,
-          subject: gradedSubject,
-          content,
-          student,
-          condition: test.assignment ? "isAssignmentEmails" : "isTestEmails",
-          userType: "student",
-          test,
-          grade,
-          passed:
-            (test.passingGrade && test.passingGrade <= grade),
-        });
+
+      if (result.graded) {
+        if (
+          ((isSendTestPushNotifications && !test.assignment) ||
+            (isSendAssignmentPushNotifications && test.assignment)) &&
+          req.instructorIsAuth
+        ) {
+          await pushNotify(notificationOptions)
+        }
+        if (
+          ((isSendTestEmails && !test.assignment) ||
+            (isSendAssignmentEmails && test.assignment)) &&
+          req.instructorIsAuth
+        ) {
+          await sendEmailToOneUser({
+            userId: studentId,
+            course,
+            subject: gradedSubject,
+            content,
+            date: getReadableDate(date, student.language),
+            student,
+            condition: emailCondition,
+            userType: "student",
+            test,
+            grade,
+            passed:
+              (test.passingGrade && test.passingGrade <= grade),
+            buttonUrl: docUrl,
+            buttonText: "viewTest"
+          });
+        }
       }
       if (req.instructorIsAuth) {
         io.getIO().emit("updateResults", {
@@ -907,16 +960,21 @@ module.exports = {
 
     if (testClosed) {
       //bell notification
+      const docUrl = `instructor-panel/course/${test.course}/grade-tests/student/${student._id}/test/${test._id}`;
+      const emailCondition = test.assignment ? "isAssignmentEmails" : "isTestEmails";
+      const pushCondition = test.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
       await notification.save();
       //push notification
       const notificationOptions = {
         multipleUsers: false,
         content: 'workSubmitted',
         test: test,
-        student:student,
+        student: student,
         passOrFail: test.passingGrade ? test.passingGrade < result.grade ? i18n.__("passed") : i18n.__("failed") : "",
         userId: course.courseInstructor,
         isInstructorRecieving: true,
+        url: docUrl,
+        condition: pushCondition,
       }
       await pushNotify(notificationOptions)
       //email instructor
@@ -926,11 +984,11 @@ module.exports = {
         subject: "workSubmittedSubject",
         content: "workSubmitted",
         student,
-        condition: test.assignment
-          ? "isAssignmentEmails"
-          : "isTestEmails",
+        condition: emailCondition,
         userType: "instructor",
         test,
+        buttonText: "viewTest",
+        buttonUrl: docUrl,
       });
     }
 
@@ -972,6 +1030,12 @@ module.exports = {
       error.code = 404;
       throw error;
     }
+
+    const isSendTestEmails = instructorConfig.isSendTestEmails;
+    const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
+
+    const isSendTestPushNotifications = instructorConfig.isSendTestPushNotifications;
+    const isSendAssignmentPushNotifications = instructorConfig.isSendAssignmentPushNotifications;
 
     const isSendNotifications = (instructorConfig.isSendTestNotifications && !instructorTest.assignment) || (instructorConfig.isSendAssignmentNotifications && instructorTest.assignment)
 
@@ -1054,7 +1118,9 @@ module.exports = {
         course: instructorTest.course,
       });
       if (isSendNotifications) notification.save();
-
+      const docUrl = `student-panel/course/${instructorTest.course}/tests/confirm/${instructorTest._id}`;
+      const emailCondition = instructorTest.assignment ? "isAssignmentEmails" : "isTestEmails";
+      const pushCondition = instructorTest.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
       //push notification
       const notificationOptions = {
         multipleUsers: false,
@@ -1062,20 +1128,37 @@ module.exports = {
         test: instructorTest,
         userId: student,
         isStudentRecieving: true,
+        url: docUrl,
+        condition: pushCondition,
       }
-      await pushNotify(notificationOptions)
 
-      await sendEmailToOneUser({
-        userId: student,
-        course: foundCourse,
-        subject: "workExcusedSubject",
-        content: "workExcused",
-        student: studentToUpdate,
-        condition: instructorTest.assignment ? "isAssignmentEmails" : "isTestEmails",
-        userType: "student",
-        test: instructorTest,
-        // message,
-      });
+      if (
+        ((isSendTestPushNotifications && !instructorTest.assignment) ||
+          (isSendAssignmentPushNotifications && instructorTest.assignment)) &&
+        req.instructorIsAuth
+      ) {
+
+        await pushNotify(notificationOptions)
+      }
+
+      if (
+        ((isSendTestEmails && !instructorTest.assignment) ||
+          (isSendAssignmentEmails && instructorTest.assignment))
+      ) {
+        await sendEmailToOneUser({
+          userId: student,
+          course: foundCourse,
+          subject: "workExcusedSubject",
+          content: "workExcused",
+          student: studentToUpdate,
+          condition: emailCondition,
+          userType: "student",
+          test: instructorTest,
+          buttonUrl: docUrl,
+          buttonText: "viewTest"
+          // message,
+        });
+      }
     }
 
 
@@ -1128,7 +1211,9 @@ module.exports = {
         });
       }
       await result.save();
-      const ave = await updateClassAverage(instructorTest)
+      const updatedClassAverage = await updateClassAverage(instructorTest);
+      const ave = isNaN(updatedClassAverage) ? 0 : updatedClassAverage;
+
       instructorTest.classAverage = Number.isNaN(ave) ? 0 : ave;
       if (!isExcused) await instructorTest.save();
       io.getIO().emit("mainMenu", {

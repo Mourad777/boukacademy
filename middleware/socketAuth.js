@@ -31,7 +31,7 @@ module.exports = (socket, next) => {
           socket.instructorIsAuth = false;
         }
       } catch (err) {
-        console.log("socket auth err");
+        // console.log("socket auth err");
         socket.adminIsAuth = false;
         socket.studentIsAuth = false;
         socket.instructorIsAuth = false;

@@ -10,11 +10,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isTestEmails + "")) {
       errors.push({ message: "isTestEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isTestPushNotifications + "")) {
+      errors.push({ message: "isTestPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isLessonNotifications + "")) {
       errors.push({ message: "isLessonNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isLessonEmails + "")) {
       errors.push({ message: "isLessonEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isLessonPushNotifications + "")) {
+      errors.push({ message: "isLessonPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isAssignmentNotifications + "")) {
       errors.push({ message: "isAssignmentNotifications must be true or false" });
@@ -22,17 +28,29 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isAssignmentEmails + "")) {
       errors.push({ message: "isAssignmentEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isAssignmentPushNotifications + "")) {
+      errors.push({ message: "isAssignmentPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isCourseNotifications + "")) {
       errors.push({ message: "isCourseNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isCourseEmails + "")) {
       errors.push({ message: "isCourseEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isCoursePushNotifications + "")) {
+      errors.push({ message: "isCoursePushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isChatNotifications + "")) {
       errors.push({ message: "isChatNotifications must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isChatPushNotifications + "")) {
+      errors.push({ message: "isChatPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isHideActiveStatus + "")) {
       errors.push({ message: "isHideActiveStatus must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isStayLoggedIn + "")) {
+      errors.push({ message: "isStayLoggedIn must be true or false" });
     }
   }
   if (userType === "instructor" && !isAdmin) {
@@ -42,11 +60,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isTestEmails + "")) {
       errors.push({ message: "isTestEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isTestPushNotifications + "")) {
+      errors.push({ message: "isTestPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isAssignmentNotifications + "")) {
       errors.push({ message: "isAssignmentNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isAssignmentEmails + "")) {
       errors.push({ message: "isAssignmentEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isAssignmentPushNotifications + "")) {
+      errors.push({ message: "isAssignmentPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendTestNotifications + "")) {
       errors.push({ message: "isSendTestNotifications must be true or false" });
@@ -54,11 +78,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isSendTestEmails + "")) {
       errors.push({ message: "isSendTestEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isSendTestPushNotifications + "")) {
+      errors.push({ message: "isSendTestPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isSendLessonNotifications + "")) {
       errors.push({ message: "isSendLessonNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendLessonEmails + "")) {
       errors.push({ message: "isSendLessonEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isSendLessonPushNotifications + "")) {
+      errors.push({ message: "isSendLessonPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendAssignmentNotifications + "")) {
       errors.push({ message: "isSendAssignmentNotifications must be true or false" });
@@ -66,11 +96,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isSendAssignmentEmails + "")) {
       errors.push({ message: "isSendAssignmentEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isSendAssignmentPushNotifications + "")) {
+      errors.push({ message: "isSendAssignmentPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isSendCourseNotifications + "")) {
       errors.push({ message: "isSendCourseNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendCourseEmails + "")) {
       errors.push({ message: "isSendCourseEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isSendCoursePushNotifications + "")) {
+      errors.push({ message: "isSendCoursePushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isChatAllowedOutsideOfficehours + "")) {
       errors.push({ message: "isChatAllowedOutsideOfficehours must be true or false" });
@@ -78,20 +114,32 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isChatNotifications + "")) {
       errors.push({ message: "isChatNotifications must be true or false" });
     }
-    if (!validator.isBoolean(configInput.isEnrollEmails + "")) {
-      errors.push({ message: "isEnrollEmails must be true or false" });
+    if (!validator.isBoolean(configInput.isChatPushNotifications + "")) {
+      errors.push({ message: "isChatPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isEnrollNotifications + "")) {
       errors.push({ message: "isEnrollNotifications must be true or false" });
     }
-    if (!validator.isBoolean(configInput.isDropCourseEmails + "")) {
-      errors.push({ message: "isDropCourseEmails must be true or false" });
+    if (!validator.isBoolean(configInput.isEnrollEmails + "")) {
+      errors.push({ message: "isEnrollEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isEnrollPushNotifications + "")) {
+      errors.push({ message: "isEnrollPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isDropCourseNotifications + "")) {
       errors.push({ message: "isDropCourseNotifications must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isDropCourseEmails + "")) {
+      errors.push({ message: "isDropCourseEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isDropCoursePushNotifications + "")) {
+      errors.push({ message: "isDropCoursePushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isHideActiveStatus + "")) {
       errors.push({ message: "isHideActiveStatus must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isStayLoggedIn + "")) {
+      errors.push({ message: "isStayLoggedIn must be true or false" });
     }
   }
 
@@ -102,11 +150,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isTestEmails + "")) {
       errors.push({ message: "isTestEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isTestPushNotifications + "")) {
+      errors.push({ message: "isTestPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isAssignmentNotifications + "")) {
       errors.push({ message: "isAssignmentNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isAssignmentEmails + "")) {
       errors.push({ message: "isAssignmentEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isAssignmentPushNotifications + "")) {
+      errors.push({ message: "isAssignmentPushNotifications must be true or false" });
     }
 
     if (
@@ -184,17 +238,29 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isChatNotifications + "")) {
       errors.push({ message: "isChatNotifications must be true or false" });
     }
-    if (!validator.isBoolean(configInput.isEnrollEmails + "")) {
-      errors.push({ message: "isEnrollEmails must be true or false" });
+    if (!validator.isBoolean(configInput.isChatPushNotifications + "")) {
+      errors.push({ message: "isChatPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isEnrollNotifications + "")) {
       errors.push({ message: "isEnrollNotifications must be true or false" });
     }
-    if (!validator.isBoolean(configInput.isDropCourseEmails + "")) {
-      errors.push({ message: "isDropCourseEmails must be true or false" });
+    if (!validator.isBoolean(configInput.isEnrollEmails + "")) {
+      errors.push({ message: "isEnrollEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isEnrollPushNotifications + "")) {
+      errors.push({ message: "isEnrollPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isDropCourseNotifications + "")) {
       errors.push({ message: "isDropCourseNotifications must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isDropCourseEmails + "")) {
+      errors.push({ message: "isDropCourseEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isDropCoursePushNotifications + "")) {
+      errors.push({ message: "isDropCoursePushNotifications must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isNewInstructorAccountPushNotifications + "")) {
+      errors.push({ message: "isNewInstructorAccountPushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isNewInstructorAccountEmails + "")) {
       errors.push({ message: "isNewInstructorAccountEmails must be true or false" });
@@ -202,7 +268,9 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isNewInstructorAccountNotifications + "")) {
       errors.push({ message: "isNewInstructorAccountNotifications must be true or false" });
     }
-
+    if (!validator.isBoolean(configInput.isNewStudentAccountPushNotifications + "")) {
+      errors.push({ message: "isNewStudentAccountPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isNewStudentAccountEmails + "")) {
       errors.push({ message: "isNewStudentAccountEmails must be true or false" });
     }
@@ -218,11 +286,17 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isHideActiveStatus + "")) {
       errors.push({ message: "isHideActiveStatus must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isStayLoggedIn + "")) {
+      errors.push({ message: "isStayLoggedIn must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isSendTestNotifications + "")) {
       errors.push({ message: "isSendTestNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendTestEmails + "")) {
       errors.push({ message: "isSendTestEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isSendTestPushNotifications + "")) {
+      errors.push({ message: "isSendPushTestNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendLessonNotifications + "")) {
       errors.push({ message: "isSendLessonNotifications must be true or false" });
@@ -230,17 +304,26 @@ const validateConfiguration = (configInput, userType, isAdmin) => {
     if (!validator.isBoolean(configInput.isSendLessonEmails + "")) {
       errors.push({ message: "isSendLessonEmails must be true or false" });
     }
+    if (!validator.isBoolean(configInput.isSendLessonPushNotifications + "")) {
+      errors.push({ message: "isSendLessonPushNotifications must be true or false" });
+    }
     if (!validator.isBoolean(configInput.isSendAssignmentNotifications + "")) {
       errors.push({ message: "isSendAssignmentNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendAssignmentEmails + "")) {
       errors.push({ message: "isSendAssignmentEmails must be true or false" });
     }
-    if (!validator.isBoolean(configInput.isSendCourseNotifications + "")) {
-      errors.push({ message: "isSendCourseNotifications must be true or false" });
+    if (!validator.isBoolean(configInput.isSendAssignmentPushNotifications + "")) {
+      errors.push({ message: "isSendAssignmentPushNotifications must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isSendCoursePushNotifications + "")) {
+      errors.push({ message: "isSendCoursePushNotifications must be true or false" });
     }
     if (!validator.isBoolean(configInput.isSendCourseEmails + "")) {
       errors.push({ message: "isSendCourseEmails must be true or false" });
+    }
+    if (!validator.isBoolean(configInput.isSendCourseNotifications + "")) {
+      errors.push({ message: "isSendCourseNotifications must be true or false" });
     }
   
   }

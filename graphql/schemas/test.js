@@ -35,6 +35,7 @@ module.exports = buildSchema(`
         assignment: Boolean!
         readingMaterials : [ReadingMaterial]
         audioMaterials : [AudioMaterial]
+        videoMaterials : [VideoMaterial]
         createdAt: String
     }
 
@@ -48,6 +49,11 @@ module.exports = buildSchema(`
         audio: String
         section: String
         fileUpload: Boolean
+    }
+
+    type VideoMaterial {
+        video: String
+        section: String
     }
 
     type FillBlanksSection {
@@ -101,6 +107,11 @@ module.exports = buildSchema(`
         fileUpload: Boolean
     }
 
+    input VideoMaterialInput {
+        video: String
+        section: String
+    }
+
     input TestInputData {
         testName: String!
         published: Boolean!
@@ -127,6 +138,7 @@ module.exports = buildSchema(`
         notes:String
         readingMaterials: [ReadingMaterialInput]
         audioMaterials: [AudioMaterialInput]
+        videoMaterials: [VideoMaterialInput]
     }
 
     input McQuestionInput {

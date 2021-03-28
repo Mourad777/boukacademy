@@ -20,9 +20,9 @@ const moment = require("moment");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
 const { updateClassAverage } = require("../../../util/updateClassAverage");
-const webpush = require('web-push')
-const { i18n } = require("../../../i18n.config");
 const { pushNotify } = require("../../../util/pushNotification");
+const { getQuestionsUrls } = require("./util/getQuestionsUrls");
+const { getTestUrls } = require("../question/util/getTestUrls");
 
 module.exports = {
   createTest: async function (
@@ -35,6 +35,7 @@ module.exports = {
     },
     req
   ) {
+    console.log('testInput',testInput)
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -129,6 +130,15 @@ module.exports = {
       }
     );
 
+    const sanitizedVideoMaterials = (testInput.videoMaterials || []).map(
+      (material) => {
+        return {
+          ...material,
+          video: xss(material.video, noHtmlTags),
+        };
+      }
+    );
+
     const sanitizedMcInput = (multipleChoiceQuestionsInput || []).map((q) => {
       return {
         ...q,
@@ -179,6 +189,7 @@ module.exports = {
       sectionWeights: sectionWeights,
       readingMaterials: sanitizedReadingMaterials,
       audioMaterials: sanitizedAudioMaterials,
+      videoMaterials: sanitizedVideoMaterials,
       multipleChoiceQuestions: testInput.testSections.includes("mc")
         ? sanitizedMcInput
         : null,
@@ -212,30 +223,46 @@ module.exports = {
         await notification.save();
       }
     }
+
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
+
+    const isSendTestPushNotifications = instructorConfig.isSendTestPushNotifications;
+    const isSendAssignmentPushNotifications = instructorConfig.isSendAssignmentPushNotifications;
+
     if (testInput.published) {
+
+      let content = "newWorkPosted";
+      let subject = "newWorkPostedSubject";
+      let date;
+      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+        if (rq.approved) {
+          return rq.student;
+        }
+      });
+      const url = `student-panel/course/${course._id}/tests/confirm/${testInput.testId}`;
+      const emailsCondition = createdTest.assignment ? "isAssignmentEmails" : "isTestEmails";
+      const pushCondition = createdTest.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
+      //push notifications
+      const notificationOptions = {
+        multipleUsers: true,
+        users: studentIdsEnrolled,
+        content: 'newWorkPosted',
+        course: course,
+        test: createdTest,
+        url: url,
+        condition: pushCondition,
+      };
+      if (
+        (isSendTestPushNotifications && !testInput.assignment) ||
+        (isSendAssignmentPushNotifications && testInput.assignment)
+      ) {
+        await pushNotify(notificationOptions);
+      }
       if (
         (isSendTestEmails && !testInput.assignment) ||
         (isSendAssignmentEmails && testInput.assignment)
       ) {
-        let content = "newWorkPosted";
-        let subject = "newWorkPostedSubject";
-        let date;
-        const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-          if (rq.approved) {
-            return rq.student;
-          }
-        });
-        //push notifications
-        const notificationOptions = {
-          multipleUsers:true,
-          users:studentIdsEnrolled,
-          content:'newWorkPosted',
-          course:course,
-          test:createdTest,
-        }
-        await pushNotify(notificationOptions)
         await sendEmailsToStudents({
           studentIdsEnrolled,
           course,
@@ -243,9 +270,9 @@ module.exports = {
           subject,
           date,
           test: createdTest,
-          condition: createdTest.assignment
-            ? "isAssignmentEmails"
-            : "isTestEmails",
+          condition: emailsCondition,
+          buttonText: 'viewTest',
+          buttonUrl: url,
         });
       }
     }
@@ -403,6 +430,14 @@ module.exports = {
         };
       }
     );
+    const sanitizedVideoMaterials = (testInput.videoMaterials || []).map(
+      (material) => {
+        return {
+          ...material,
+          video: xss(material.video, noHtmlTags),
+        };
+      }
+    );
 
     const fillBlankQuestionSections = {
       text: fillBlankQuestionsInput.fillBlankContent,
@@ -526,6 +561,7 @@ module.exports = {
 
     test.readingMaterials = sanitizedReadingMaterials;
     test.audioMaterials = sanitizedAudioMaterials;
+    test.videoMaterials = sanitizedVideoMaterials;
 
     test.multipleChoiceQuestions = testInput.testSections.includes("mc")
       ? sanitizedMcInput
@@ -548,39 +584,55 @@ module.exports = {
     }
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
-    if (
-      (isSendTestEmails && !testInput.assignment) ||
-      (isSendAssignmentEmails && testInput.assignment)
-    ) {
-      let subject = "workUpdatedSubject";
-      const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
-        if (rq.approved) {
-          return rq.student;
-        }
-      });
 
-      //push notifications
-      const notificationOptions = {
-        multipleUsers:true,
-        users:studentIdsEnrolled,
-        content:'workUpdatedSubject',
-        course:course,
-        test:updatedTest,
+    const isSendTestPushNotifications = instructorConfig.isSendTestPushNotifications;
+    const isSendAssignmentPushNotifications = instructorConfig.isSendAssignmentPushNotifications;
+
+    let subject = "workUpdatedSubject";
+    const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
+      if (rq.approved) {
+        return rq.student;
       }
-      await pushNotify(notificationOptions)
+    });
+    const docUrl = `student-panel/course/${test.course}/tests/confirm/${testInput.testId}`
+    const emailsCondition = updatedTest.assignment ? "isAssignmentEmails" : "isTestEmails";
+    const pushCondition = updatedTest.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
+    //push notifications
+    const notificationOptions = {
+      multipleUsers: true,
+      users: studentIdsEnrolled,
+      content: testPostedContent ? "newWorkPosted" : "workUpdated",
+      course: course,
+      test: updatedTest,
+      url: docUrl,
+      condition: pushCondition,
+    }
+    if (testInput.published) {
+      if (
+        (isSendTestPushNotifications && !testInput.assignment) ||
+        (isSendAssignmentPushNotifications && testInput.assignment)
+      ) {
+        await pushNotify(notificationOptions)
+      }
 
-      await sendEmailsToStudents({
-        studentIdsEnrolled,
-        course,
-        content: testPostedContent ? "newWorkPosted" : content,
-        subject: testPostedContent ? "newWorkPosted" : subject,
-        date: test.availableOnDate,
-        dateSecondary: test.dueDate,
-        test: updatedTest,
-        condition: updatedTest.assignment
-          ? "isAssignmentEmails"
-          : "isTestEmails",
-      });
+      if (
+        (isSendTestEmails && !testInput.assignment) ||
+        (isSendAssignmentEmails && testInput.assignment)
+      ) {
+        await sendEmailsToStudents({
+          studentIdsEnrolled,
+          course,
+          content: testPostedContent ? "newWorkPosted" : content.length > 0 ? content : "workUpdated",
+          subject: testPostedContent ? "newWorkPosted" : subject,
+          date: test.availableOnDate,
+          dateSecondary: test.dueDate,
+          test: updatedTest,
+          condition: emailsCondition,
+          buttonText: 'viewTest',
+          buttonUrl: docUrl,
+        });
+      }
+
     }
     io.getIO().emit("updateCourses", {
       userType: "student",
@@ -625,6 +677,7 @@ module.exports = {
     }
     const categories = await Category.findOne({ course: test.course });
     const questions = await Question.find();
+    const tests = await Test.find();
     const students = await Student.find();
     const results = await Result.find({ test: test._id });
 
@@ -676,6 +729,11 @@ module.exports = {
       if (item.audio) return item.audio;
     });
     addItemsToDeleteList(audioMaterials);
+    //delete test video materials
+    const videoMaterials = (test.videoMaterials || []).map((item) => {
+      if (item.video) return item.video;
+    });
+    addItemsToDeleteList(videoMaterials);
 
     if (test.sectionWeights.mcSection) {
       const imagesStrings = test.multipleChoiceQuestions.map(
@@ -759,32 +817,10 @@ module.exports = {
       assignmentSessionIdsToDelete.length > 0;
 
     //CHECK TO SEE IF THE FILES ARENT BEING USED IN THE QUESTION MODEL
-    const filesToNotDelete = [];
-    const imageStrings = questions.map((item) => {
-      if (item.question !== "" && item.question) {
-        return item.question;
-      }
-    });
-    const imageUrls = getKeysFromString(imageStrings);
-    imageUrls.forEach((item) => {
-      filesToNotDelete.push(item);
-    });
-    //push audio files to the list of files to not delete
-    questions.forEach((item) => {
-      if (item.questionAudio !== "" && item.questionAudio) {
-        filesToNotDelete.push(item.questionAudio);
-      }
-      if (item.audio !== "" && item.audio) {
-        filesToNotDelete.push(item.audio);
-      }
-      if (item.blanks) {
-        item.blanks.forEach((item) => {
-          if (item.audio && item.audio !== "") {
-            filesToNotDelete.push(item.audio);
-          }
-        });
-      }
-    });
+    const otherTests = tests.filter(t => t._id.toString() !== id.toString());
+    console.log('other tests: ', otherTests)
+    const filesToNotDelete = [...getQuestionsUrls(questions), ...getTestUrls(otherTests)];
+
     const filesToDeleteFiltered = filesToDelete
       .filter((item) => {
         if (!filesToNotDelete.includes(item)) {
@@ -867,8 +903,12 @@ module.exports = {
     const isSendNotifications = (instructorConfig.isSendTestNotifications && !test.assignment) || (instructorConfig.isSendAssignmentNotifications && test.assignment)
     const isSendTestEmails = instructorConfig.isSendTestEmails;
     const isSendAssignmentEmails = instructorConfig.isSendAssignmentEmails;
+    const isSendTestPushNotifications = instructorConfig.isSendTestPushNotifications;
+    const isSendAssignmentPushNotifications = instructorConfig.isSendAssignmentPushNotifications;
+
     const student = await Student.findById(studentId);
     ////////////////Case for reseting test for 1 student/////////////////////
+    const docUrl = `student-panel/course/${test.course}/tests/confirm/${test._id}`;
     if (student) {
       //1. find the one test result
       const result = await Result.findOne({ test: testId, student: studentId });
@@ -912,18 +952,28 @@ module.exports = {
         course: test.course,
         message,
       });
+
+      const emailCondition = test.assignment ? "isAssignmentEmails" : "isTestEmails";
+      const pushCondition = test.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
       //8. push notification
       const notificationOptions = {
-        multipleUsers:false,
+        multipleUsers: false,
         // users:studentIdsEnrolled,
-        userId:studentId,
-        content:'workReset',
-        course:course,
-        test:test,
-        isStudentRecieving:true,
-        student:student,
+        userId: studentId,
+        content: 'workReset',
+        course: course,
+        test: test,
+        isStudentRecieving: true,
+        student: student,
+        url: docUrl,
+        condition: pushCondition,
       }
-      await pushNotify(notificationOptions)
+      if (
+        (isSendTestPushNotifications && !test.assignment) ||
+        (isSendAssignmentPushNotifications && test.assignment)
+      ) {
+        await pushNotify(notificationOptions)
+      }
       //9. delete appropriate s3 directory
       const resultDirectory = `courses/${test.course}/tests/${testId}/results/${result._id}`;
       await emptyS3Directory(resultDirectory);
@@ -940,11 +990,14 @@ module.exports = {
           course,
           subject: "workResetSubject",
           content: "workReset",
+          secondaryContent: message,
           student,
-          condition: test.assignment ? "isAssignmentEmails" : "isTestEmails",
+          condition: emailCondition,
           userType: "student",
           test,
           message,
+          buttonText: 'viewTest',
+          buttonUrl: docUrl
         });
       }
       const ave = await updateClassAverage(test)
@@ -1009,7 +1062,6 @@ module.exports = {
         },
       }
     );
-
     let resultDirectory;
     if (!student) {
       resultDirectory = `courses/${test.course}/tests/${testId}/results`;
@@ -1044,14 +1096,23 @@ module.exports = {
         return rq.student;
       }
     });
+    const emailCondition = test.assignment ? "isAssignmentEmails" : "isTestEmails";
+    const pushCondition = test.assignment ? "isAssignmentPushNotifications" : "isTestPushNotifications";
     const notificationOptions = {
-      multipleUsers:true,
-      users:studentIdsEnrolled,
-      content:'workResetSubject',
-      course:course,
-      test:test,
+      multipleUsers: true,
+      users: studentIdsEnrolled,
+      content: 'workResetSubject',
+      course: course,
+      test: test,
+      url: docUrl,
+      condition: pushCondition,
     }
-    await pushNotify(notificationOptions)
+    if (
+      (isSendTestPushNotifications && !test.assignment) ||
+      (isSendAssignmentPushNotifications && test.assignment)
+    ) {
+      await pushNotify(notificationOptions)
+    }
     if (
       (isSendTestEmails && !test.assignment) ||
       (isSendAssignmentEmails && test.assignment)
@@ -1062,7 +1123,9 @@ module.exports = {
         content: "workResetCanTakeAgain",
         subject: "workResetSubject",
         test,
-        condition: test.assignment ? "isAssignmentEmails" : "isTestEmails",
+        condition: emailCondition,
+        buttonUrl: docUrl,
+        buttonText: 'viewTest'
       });
     }
 

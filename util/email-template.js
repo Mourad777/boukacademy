@@ -93,7 +93,7 @@ const emailTemplate = (primaryText, secondaryText, tertiaryText, buttonText, but
 const bodyTemplate = `
 ${emailTemplateHead}
 <body style="overflow-x: hidden;">
-<table align="center" cellpadding="0" cellspacing="0" width="100%" style="height:100vh;width:100%;">
+<table align="center" cellpadding="0" cellspacing="0" width="100%" style="height:50vh;width:100%;">
   <tr>
     <td align="left" valign="top" width="100%" style="background: #f7f7f7;">
       <center>

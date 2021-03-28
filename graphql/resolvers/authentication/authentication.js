@@ -13,58 +13,254 @@ const { sendEmailToOneUser } = require("../../../util/email-user");
 const io = require("../../../socket");
 const { i18n } = require("../../../i18n.config");
 const { emailTemplate } = require("../../../util/email-template");
-
+const { pushNotify } = require("../../../util/pushNotification");
+const { getDefaultAdminSettings, getDefaultInstructorSettings, getDefaultStudentSettings, createToken } = require("./util");
+const bson = require('bson');
+//SESSION_EXPIRATION_TIME is for the automatic logout of the session upon inactivity
+//SESSION_REFRESH_TIME_LIMIT is for the automatic logout of the session regardless of inactivity
 module.exports = {
-  userLogin: async function ({ email, password, userType }) {
+  userLogin: async function ({ email, password, userType, notificationSubscription }, req) {
+    //check if user has account userId
+    console.log('check -1')
+    console.log('req.isGoogleAuth',req.isGoogleAuth)
     const user = await require(`../../../models/${userType}`).findOne({
       email: email.toLowerCase().trim(),
     });
+
+    if (!user && req.isGoogleAuth) {
+      const { given_name, family_name, locale, } = req.googleUser
+      //create account
+
+      const foundAdmin = await Instructor.findOne({ admin: true }).populate(
+        "configuration"
+      );
+
+      if (!foundAdmin && userType === "student") {
+        const error = new Error("noAdminAccount");
+        error.code = 403;
+        throw error;
+      }
+      const shouldCreateAdmin =
+        !foundAdmin && userType === "instructor";
+
+      const admin = await Instructor.findOne({ admin: true }).populate(
+        "configuration"
+      );
+
+      let adminSettings
+      if (admin) {
+        adminSettings = admin._doc.configuration;
+      }
+
+      const userId = new bson.ObjectId().toHexString();
+      console.log('userId 1', userId)
+
+      let configuration;
+      if (shouldCreateAdmin) {
+        configuration = new Configuration(getDefaultAdminSettings(userId));
+      }
+      if (!shouldCreateAdmin && userType === "instructor") {
+        configuration = new Configuration(getDefaultInstructorSettings(userId));
+      }
+      if (userType === "student") {
+        configuration = new Configuration(getDefaultStudentSettings(userId));
+      }
+      const createdConfig = await configuration.save();
+
+      const User = require(`../../../models/${userType}`);
+      const expirationTime = process.env.LONG_SESSION_REFRESH_TIME_LIMIT;
+      const token = createToken(userType, userId, email, expirationTime);
+      let isAccountApproved = false;
+      if (shouldCreateAdmin) {
+        isAccountApproved = true
+      } else {
+        if (userType === 'student' && !adminSettings.isApproveStudentAccounts) {
+          isAccountApproved = true
+        }
+        if (userType === 'instructor' && !adminSettings.isApproveInstructorAccounts) {
+          isAccountApproved = true
+        }
+      }
+
+      const newUser = new User({
+        _id: userId,
+        email: xss(email.toLowerCase().trim(), noHtmlTags),
+        firstName: xss(given_name.trim(), noHtmlTags),
+        lastName: xss(family_name.trim(), noHtmlTags),
+        language: xss(locale, noHtmlTags),
+        // password: hashedPw,
+        accountVerified: true,
+        // dob: xss(accountInput.dob, noHtmlTags),
+        // sex: xss(accountInput.sex, noHtmlTags),
+        // profilePicture: xss(accountInput.profilePicture, noHtmlTags),
+        admin: shouldCreateAdmin,
+        configuration: createdConfig._id,
+        isAccountApproved,
+        isAccountSuspended: false,
+        notificationSubscription: notificationSubscription,
+      });
+
+      const createdUser = await newUser.save();
+
+
+
+
+      if (!shouldCreateAdmin) {
+
+        console.log('creating reg instructor')
+
+        i18n.setLocale(admin.language);
+        //send e-mail notifying admin
+        let emailCondition, pushCondition, notificationContent;
+        if (userType === 'instructor') {
+          pushCondition = 'isNewInstructorAccountPushNotifications'
+          emailCondition = 'isNewInstructorAccountEmails'
+          notificationContent = 'newInstructorAccount'
+        }
+        if (userType === 'student') {
+          pushCondition = 'isNewStudentAccountPushNotifications'
+          emailCondition = 'isNewStudentAccountEmails'
+          notificationContent = 'newStudentAccount'
+        }
+        let secondaryContent;
+        if (
+          (userType === 'student' && adminSettings.isApproveStudentAccounts) ||
+          userType === 'instructor' && adminSettings.isApproveInstructorAccounts
+        ) {
+          secondaryContent = i18n.__('pendingApproval')
+        }
+
+        // transporter.sendMail({
+        //   from: "e-learn@learn.com",
+        //   to: accountInput.email,
+        //   subject: i18n.__("verifyAccountEmailSubject"),
+        //   html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
+        // });
+        console.log('check 1')
+        const notificationOptions = {
+          multipleUsers: false,
+          userId: admin._id,
+          isInstructorRecieving: true,
+          student: userType === 'student' ? createdUser : "",
+          instructor: userType === 'instructor' ? createdUser : "",
+          url: `users/${userType}s/${createdUser._id}`,
+          content: notificationContent,
+          condition:pushCondition,
+        }
+
+        await pushNotify(notificationOptions);
+
+
+        console.log('check 2')
+
+        await sendEmailToOneUser({
+          userId: foundAdmin._id,
+          course: null,
+          subject: notificationContent + 'Subject',
+          content: notificationContent,
+          secondaryContent,
+          student: userType === 'student' ? user : null,
+          instructor: userType === 'instructor' ? user : null,
+          condition:emailCondition,
+          userType: 'instructor',
+          userTypeSender: userType,
+          buttonText: 'userDetails',
+          buttonUrl: `users/${userType}s/${createdUser._id}`,
+        });
+
+        console.log('check 3')
+
+        const notification = new Notification({
+          toUserType: "instructor",
+          toSpecificUser: foundAdmin._id,
+          fromUser: createdUser._id,
+          content: [notificationContent],
+          documentType: notificationContent,
+        });
+
+        await notification.save();;
+        io.getIO().emit("newAccount", {
+          userType: "admin",
+        });
+
+      }
+
+      return {
+        ...createdUser._doc,
+        token: token,
+        userId: createdUser._id.toString(),
+        expiresIn: process.env.LONG_SESSION_REFRESH_TIME_LIMIT,
+        language: createdUser.language,
+        // firstName: user.firstName,
+        // lastName: user.lastName,
+        // testResults: user.testResults,
+        // completedCourses: user.completedCourses,
+        profilePicture: await getObjectUrl(createdUser.profilePicture),
+        refreshTokenExpiration:
+          Date.now() + parseInt(process.env.LONG_SESSION_REFRESH_TIME_LIMIT) * 1000,
+        // lastLogin: user.lastLogin,
+        // admin:user.admin,
+      };
+    }
+
+    console.log('not creating account')
+
+
+
+
+
     if (!user) {
       const error = new Error(`${userType}NoAccount`);
       error.code = 401;
       throw error;
     }
-    if (!user.accountVerified) {
+    if (!user.accountVerified && !req.isGoogleAuth) {
       const error = new Error("notVerifiedCheckEmail");
       error.code = 401;
       throw error;
+    }
+    if (!user.accountVerified && req.isGoogleAuth) {
+      user.accountVerified = true;
     }
     if (user.isAccountSuspended) {
       const error = new Error("accountSuspended");
       error.code = 403;
       throw error;
     }
-    const isEqual = await bcrypt.compare(password, user.password);
-    if (!isEqual) {
-      const error = new Error("wrongPassword");
-      error.code = 401;
-      throw error;
+    if (!req.isGoogleAuth) {
+      if (!user.password) {
+        const error = new Error("noPasswordCreated");
+        error.code = 401;
+        throw error;
+      }
+      const isEqual = await bcrypt.compare(password, user.password);
+      if (!isEqual) {
+        const error = new Error("wrongPassword");
+        error.code = 401;
+        throw error;
+      }
     }
-    const token = jwt.sign(
-      {
-        [userType + "Id"]: user._id.toString(),
-        email: user.email.trim(),
-      },
-      process.env.SECRET,
-      { expiresIn: `${process.env.SESSION_EXPIRATION_TIME}s` }
-    );
+
     user.lastLogin = new Date();
-    await user.save();
+    user.notificationSubscription = notificationSubscription,
+      await user.save();
+    const config = await Configuration.findOne({
+      user: user._id,
+    });
+    const expirationTime = config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_EXPIRATION_TIME
+    const token = createToken(userType, user._id, email, expirationTime);
+    console.log('process.env.LONG_SESSION_REFRESH_TIME_LIMIT', process.env.LONG_SESSION_REFRESH_TIME_LIMIT)
+    console.log('process.env.SESSION_EXPIRATION_TIME', process.env.SESSION_EXPIRATION_TIME)
+    console.log('config.isStayLoggedIn', config.isStayLoggedIn, Date.now() + parseInt(config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_REFRESH_TIME_LIMIT) * 1000)
     return {
       ...user._doc,
       token: token,
       userId: user._id.toString(),
-      expiresIn: process.env.SESSION_EXPIRATION_TIME,
+      expiresIn: expirationTime,
       language: user.language,
-      // firstName: user.firstName,
-      // lastName: user.lastName,
-      // testResults: user.testResults,
-      // completedCourses: user.completedCourses,
       profilePicture: await getObjectUrl(user.profilePicture),
       refreshTokenExpiration:
-        Date.now() + parseInt(process.env.SESSION_REFRESH_TIME_LIMIT) * 1000,
-      // lastLogin: user.lastLogin,
-      // admin:user.admin,
+        Date.now() + parseInt(config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_REFRESH_TIME_LIMIT) * 1000,
     };
   },
 
@@ -94,6 +290,7 @@ module.exports = {
       _id: user._id.toString(),
       profilePicture: await getObjectUrl(user.profilePicture),
       documents,
+      isPassword: !!user.password
     };
   },
 
@@ -105,15 +302,10 @@ module.exports = {
       error.code = 422;
       throw error;
     }
-    const token = jwt.sign(
-      {
-        [accountInput.accountType + "Id"]: accountInput.id.toString(),
-        email: accountInput.email,
-        accountType: accountInput.accountType,
-      },
-      process.env.VERIFICATION_SECRET,
-      { expiresIn: "168h" } //1 week
-    );
+    const userId = xss(accountInput.id, noHtmlTags);
+    const expirationTime = process.env.SESSION_EXPIRATION_TIME;
+    const secret = process.env.VERIFICATION_SECRET;
+    const token = createToken(accountInput.accountType, userId, accountInput.email, expirationTime, secret);
 
     const hashedPw = await bcrypt.hash(
       xss(accountInput.password, noHtmlTags),
@@ -122,6 +314,11 @@ module.exports = {
 
     const User = require(`../../../models/${accountInput.accountType}`);
     const foundAdmin = await Instructor.findOne({ admin: true });
+    if (!foundAdmin && accountInput.accountType === "student") {
+      const error = new Error("noAdminAccount");
+      error.code = 403;
+      throw error;
+    }
     const shouldCreateAdmin =
       !foundAdmin && accountInput.accountType === "instructor";
     const admin = await Instructor.findOne({ admin: true }).populate(
@@ -132,91 +329,28 @@ module.exports = {
       adminSettings = admin._doc.configuration;
     }
 
-    const userId = xss(accountInput.id, noHtmlTags);
-
     let configuration;
     if (shouldCreateAdmin) {
-      configuration = new Configuration({
-        user: userId,
-        isChatNotifications: true,
-        isHideActiveStatus: false,
-        dropCourseGrade: 30,
-        isDropCoursePenalty: true,
-        coursePassGrade: 50,
-        isEnrollAllowedAfterDropCourse: true,
-        isInstructorCoursesLimit: true,
-        instructorCoursesLimit: 10,
-        isApproveInstructorAccounts: true,
-        isApproveStudentAccounts: true,
-        isContentBlockedCourseEnd: true,
-        studentFileSizeLimit: 25, //MB
-        instructorFileSizeLimit: 100, //MB
-        isPasswordRequiredStartTest: true,
-        voiceRecordTimeLimit: 60, //seconds
-        blockedInstructors: [],
-        blockedStudents: [],
-        isChatAllowedOutsideOfficehours: false,
-
-        isSendTestNotifications: true,
-        isSendTestEmails: true,
-        isSendLessonNotifications: true,
-        isSendLessonEmails: true,
-        isSendAssignmentNotifications: true,
-        isSendAssignmentEmails: true,
-        isSendCourseNotifications: true,
-        isSendCourseEmails: true,
-
-        isEnrollEmails: true,
-        isEnrollNotifications: true,
-        isDropCourseEmails: true,
-        isDropCourseNotifications: true,
-        isNewInstructorAccountEmails: true,
-        isNewInstructorAccountNotifications: true,
-        isAllowDeleteStudentAccount: true,
-        isAllowDeleteInstructorAccount: true,
-      });
+      configuration = new Configuration(getDefaultAdminSettings());
     }
-
     if (!shouldCreateAdmin && accountInput.accountType === "instructor") {
-      configuration = new Configuration({
-        user: userId,
-        isChatAllowedOutsideOfficehours: false,
-        isChatNotifications: true,
-        isHideActiveStatus: false,
-        isSendTestNotifications: true,
-        isSendTestEmails: true,
-        isSendLessonNotifications: true,
-        isSendLessonEmails: true,
-        isSendAssignmentNotifications: true,
-        isSendAssignmentEmails: true,
-        isSendCourseNotifications: true,
-        isSendCourseEmails: true,
-
-        isEnrollEmails: true,
-        isEnrollNotifications: true,
-        isDropCourseEmails: true,
-        isDropCourseNotifications: true,
-      });
+      configuration = new Configuration(getDefaultInstructorSettings(userId));
     }
-
     if (accountInput.accountType === "student") {
-      configuration = new Configuration({
-        user: userId,
-        blockedStudentsChat: [],
-        isTestNotifications: true,
-        isTestEmails: true,
-        isLessonNotifications: true,
-        isLessonEmails: true,
-        isAssignmentNotifications: true,
-        isAssignmentEmails: true,
-        isCourseNotifications: true,
-        isCourseEmails: true,
-        isChatNotifications: true,
-        isHideActiveStatus: false,
-      });
+      configuration = new Configuration(getDefaultStudentSettings(userId));
     }
     const createdConfig = await configuration.save();
-
+    let isAccountApproved = false;
+    if (shouldCreateAdmin) {
+      isAccountApproved = true
+    } else {
+      if (accountInput.accountType === 'student' && !adminSettings.isApproveStudentAccounts) {
+        isAccountApproved = true
+      }
+      if (accountInput.accountType === 'instructor' && !adminSettings.isApproveInstructorAccounts) {
+        isAccountApproved = true
+      }
+    }
     const user = new User({
       _id: userId,
       email: xss(accountInput.email.toLowerCase().trim(), noHtmlTags),
@@ -232,31 +366,40 @@ module.exports = {
       accountVerificationTokenExpiration: Date.now() + 3600000 * 24 * 7, // 1 week,
       admin: shouldCreateAdmin,
       configuration: createdConfig._id,
-      isAccountApproved: shouldCreateAdmin || !adminSettings.isApproveInstructorAccounts ? true : false,
+      isAccountApproved,
       isAccountSuspended: false,
+      notificationSubscription: accountInput.notificationSubscription,
     });
+    i18n.setLocale(accountInput.language);
+    console.log('accountInput.language', accountInput.language)
     //send e-mail to new user to verify account
     const primaryText = i18n.__("verifyAccountEmail")
-    const secondaryText = "";
-    const tertiaryText = ""
+    console.log('primaryText', primaryText)
     const buttonUrl = `${process.env.APP_URL}verify-account/${accountInput.accountType}/${token}`
-    const buttonText = i18n.__("buttons.confirm")
+    const buttonText = i18n.__("confirm");
+    const subject = i18n.__("verifyAccountEmailSubject")
+    console.log('subject', i18n.__("verifyAccountEmailSubject"))
+    console.log('buttonText', buttonText)
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: accountInput.email,
-      subject: i18n.__("verifyAccountEmailSubject"),
-      html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl),
+      subject: subject,
+      html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
     });
 
+
     if (!shouldCreateAdmin) {
+      i18n.setLocale(admin.language);
       //send e-mail notifying admin
-      let condition, notificationContent;
+      let pushCondition,emailCondition, notificationContent;
       if (accountInput.accountType === 'instructor') {
-        condition = 'isNewInstructorAccountEmails'
+        emailCondition = 'isNewInstructorAccountEmails'
+        pushCondition = 'isNewInstructorAccountPushNotifications'
         notificationContent = 'newInstructorAccount'
       }
       if (accountInput.accountType === 'student') {
-        condition = 'isNewStudentAccountEmails'
+        emailCondition = 'isNewStudentAccountEmails'
+        pushCondition = 'isNewStudentAccountPushNotifications'
         notificationContent = 'newStudentAccount'
       }
       let secondaryContent;
@@ -264,16 +407,30 @@ module.exports = {
         (accountInput.accountType === 'student' && adminSettings.isApproveStudentAccounts) ||
         accountInput.accountType === 'instructor' && adminSettings.isApproveInstructorAccounts
       ) {
-        secondaryContent = 'pendingApproval'
+        secondaryContent = i18n.__('pendingApproval')
       }
       const createdUser = await user.save();
 
-      transporter.sendMail({
-        from: "e-learn@learn.com",
-        to: accountInput.email,
-        subject: i18n.__("verifyAccountEmailSubject"),
-        html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl),
-      });
+      // transporter.sendMail({
+      //   from: "e-learn@learn.com",
+      //   to: accountInput.email,
+      //   subject: i18n.__("verifyAccountEmailSubject"),
+      //   html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
+      // });
+
+      const notificationOptions = {
+        multipleUsers: false,
+        userId: admin._id,
+        isInstructorRecieving: true,
+        student: accountInput.accountType === 'student' ? createdUser : "",
+        instructor: accountInput.accountType === 'instructor' ? createdUser : "",
+        url: `users/${accountInput.accountType}s/${createdUser._id}`,
+        content: notificationContent,
+        condition:pushCondition,
+      }
+
+      await pushNotify(notificationOptions);
+
 
       await sendEmailToOneUser({
         userId: foundAdmin._id,
@@ -283,10 +440,13 @@ module.exports = {
         secondaryContent,
         student: accountInput.accountType === 'student' ? user : null,
         instructor: accountInput.accountType === 'instructor' ? user : null,
-        condition,
+        condition:emailCondition,
         userType: 'instructor',
         userTypeSender: accountInput.accountType,
+        buttonText: 'userDetails',
+        buttonUrl: `users/${accountInput.accountType}s/${createdUser._id}`,
       });
+
       const notification = new Notification({
         toUserType: "instructor",
         toSpecificUser: foundAdmin._id,
@@ -306,7 +466,7 @@ module.exports = {
       return { ...createdUser._doc, _id: createdUser._id.toString() };
     }
     const createdUser = await user.save();
-    return { ...createdUser._doc, _id: createdUser._id.toString() };
+    return { ...createdUser._doc, _id: createdUser._id.toString(), isPassword: !!createdUser.password };
   },
 
   updateAccount: async function ({ accountInput }, req) {
@@ -328,7 +488,7 @@ module.exports = {
 
     user.firstName = xss(accountInput.firstName, noHtmlTags);
     user.lastName = xss(accountInput.lastName, noHtmlTags);
-    user.email = xss(accountInput.email.toLowerCase().trim(), noHtmlTags);
+    // user.email = xss(accountInput.email.toLowerCase().trim(), noHtmlTags);
     user.dob = xss(accountInput.dob, noHtmlTags);
     user.language = xss(accountInput.language, noHtmlTags);
     user.profilePicture = xss(accountInput.profilePicture, noHtmlTags);
@@ -349,10 +509,18 @@ module.exports = {
 
   verifyAccount: async function ({ token, password }) {
     const decodedToken = jwt.verify(token, process.env.VERIFICATION_SECRET);
-    const accountType = decodedToken.accountType;
+    console.log('decodedToken in account verify', decodedToken)
+    let accountType;
+    if (decodedToken.studentId) {
+      accountType = 'student'
+    }
+    if (decodedToken.instructorId) {
+      accountType = 'instructor'
+    }
     const userFromId = await require(`../../../models/${accountType}`).findById(
       decodedToken[accountType + "Id"]
     );
+
     if (userFromId.accountVerified) {
       const error = new Error("alreadyVerified");
       error.code = 403;
@@ -364,13 +532,6 @@ module.exports = {
       accountVerificationTokenExpiration: { $gt: Date.now() },
     });
 
-    if (!user) {
-      const error = new Error(
-        "Could not retrieve the account, the token may have expired"
-      );
-      error.code = 403;
-      throw error;
-    }
 
     const isEqual = await bcrypt.compare(password || "", user.password);
     if (!isEqual) {
@@ -384,23 +545,19 @@ module.exports = {
     user.accountVerified = true;
     user.lastLogin = new Date();
     await user.save();
-    const loginInToken = jwt.sign(
-      {
-        [accountType + "Id"]: user._id.toString(),
-        email: user.email,
-      },
-      process.env.SECRET,
-      { expiresIn: `${process.env.SESSION_EXPIRATION_TIME}s` }
-    );
+
+    const expirationTime = process.env.LONG_SESSION_REFRESH_TIME_LIMIT;
+    const loginInToken = createToken(accountType, user._id, user.email, expirationTime);
+
     return {
       token: loginInToken,
       userId: user._id.toString(),
-      expiresIn: process.env.SESSION_EXPIRATION_TIME,
+      expiresIn: process.env.LONG_SESSION_REFRESH_TIME_LIMIT,
       firstName: user.firstName,
       lastName: user.lastName,
       language: user.language,
       refreshTokenExpiration:
-        Date.now() + parseInt(process.env.SESSION_REFRESH_TIME_LIMIT) * 1000,
+        Date.now() + parseInt(process.env.LONG_SESSION_REFRESH_TIME_LIMIT) * 1000,
       lastLogin: user.lastLogin,
     };
   },
@@ -417,34 +574,36 @@ module.exports = {
     const User = require(`../../../models/${accountType}`);
     const user = await User.findOne({ email: email.trim() });
 
+    if (!user) {
+      const error = new Error("noAccountWithEmail");
+      error.code = 403;
+      throw error;
+    }
+
     if (user.accountVerified) {
       const error = new Error("alreadyVerified");
       error.code = 403;
       throw error;
     }
-    const token = jwt.sign(
-      {
-        [accountType + "Id"]: user._id.toString(),
-        email,
-        accountType,
-      },
-      process.env.VERIFICATION_SECRET,
-      { expiresIn: "168h" } //1 week
-    );
+
+    const expirationTime = process.env.SESSION_EXPIRATION_TIME;
+    const secret = process.env.VERIFICATION_SECRET;
+    const token = createToken(accountType, user._id, email, expirationTime, secret);
 
     user.accountVerificationToken = token;
     (user.accountVerificationTokenExpiration = Date.now() + 3600000 * 24 * 7), // 1 week,
       await user.save();
+    i18n.setLocale(user.language);
     const primaryText = i18n.__("verifyAccountEmail")
     const secondaryText = ""
     const tertiaryText = ""
     const buttonUrl = `${process.env.APP_URL}verify-account/${accountType}/${token}`
-    const buttonText = i18n.__("buttons.confirm")
+    const buttonText = i18n.__("confirm")
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: email,
       subject: i18n.__("verifyAccountEmailSubject"),
-      html: emailTemplate(primaryText, secondaryText,tertiaryText, buttonText, buttonUrl)
+      html: emailTemplate(primaryText, secondaryText, tertiaryText, buttonText, buttonUrl)
     });
 
     return "E-mail sent";
@@ -480,18 +639,15 @@ module.exports = {
         expiresIn: "same",
       };
     }
+    const config = await Configuration.findOne({
+      user: user._id,
+    });
+    const expirationTime = config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_EXPIRATION_TIME
+    const token = createToken(userType, user._id, user.email, expirationTime);
 
-    const token = jwt.sign(
-      {
-        [userType + "Id"]: user._id.toString(),
-        email: user.email,
-      },
-      process.env.SECRET,
-      { expiresIn: `${process.env.SESSION_EXPIRATION_TIME}s` }
-    );
     return {
       token: token,
-      expiresIn: process.env.SESSION_EXPIRATION_TIME,
+      expiresIn: expirationTime,
     };
   },
 };

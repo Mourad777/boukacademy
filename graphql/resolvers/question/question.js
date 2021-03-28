@@ -1,7 +1,6 @@
 const Test = require("../../../models/test");
 const Question = require("../../../models/question");
 const Instructor = require("../../../models/instructor");
-const io = require("../../../socket");
 const { getKeysFromString } = require("../../../util/extractURL");
 const { deleteFiles } = require("../../../s3");
 const { validateQuestion } = require("./validate");
@@ -12,6 +11,7 @@ const {
   textEditorWhitelist,
 } = require("../validation/xssWhitelist");
 const { getObjectUrl } = require("../../../s3");
+const { getTestUrls } = require("./util/getTestUrls");
 
 module.exports = {
   createQuestion: async function (
@@ -384,50 +384,7 @@ module.exports = {
     }
 
     //CHECK TO SEE IF THE FILES ARENT BEING USED IN THE TEST MODEL
-    const filesToNotDelete = [];
-    const addItemsToNotDeleteList = (keys) => {
-      if (!keys || keys.length === 0) return;
-      keys.forEach((key) => {
-        if (key) filesToNotDelete.push(key);
-      });
-    };
-    tests.forEach((test) => {
-      if (test.sectionWeights.mcSection) {
-        const imagesStrings = test.multipleChoiceQuestions.map(
-          (item) => item.question
-        );
-        const imageUrls = getKeysFromString(imagesStrings);
-        addItemsToNotDeleteList(imageUrls);
-      }
-      if (test.sectionWeights.essaySection) {
-        const imagesStrings = test.essayQuestions.map((item) => item.question);
-        const imageUrls = getKeysFromString(imagesStrings);
-        addItemsToNotDeleteList(imageUrls);
-      }
-      if (test.sectionWeights.speakingSection) {
-        const imagesStrings = test.speakingQuestions.map(
-          (item) => item.question
-        );
-        const imageUrls = getKeysFromString(imagesStrings);
-
-        addItemsToNotDeleteList(imageUrls);
-        const audioQuestions = test.speakingQuestions.map(
-          (item) => item.questionAudio
-        );
-        addItemsToNotDeleteList(audioQuestions);
-        const audioAnswers = test.speakingQuestions.map((item) => item.audio);
-        addItemsToNotDeleteList(audioAnswers);
-      }
-      if (test.sectionWeights.fillBlankSection) {
-        const imagesString = test.fillInBlanksQuestions.text;
-        const imageUrls = getKeysFromString(imagesString);
-        addItemsToNotDeleteList(imageUrls);
-        const audio = test.fillInBlanksQuestions.blanks.map(
-          (item) => item.audio
-        );
-        addItemsToNotDeleteList(audio);
-      }
-    });
+    const filesToNotDelete = getTestUrls(tests);
 
     const filesToDeleteFiltered = filesToDelete.filter((item) => {
       if (!filesToNotDelete.includes(item)) {

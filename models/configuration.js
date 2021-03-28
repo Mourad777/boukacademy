@@ -14,7 +14,17 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    isChatPushNotifications: {
+      //all
+      type: Boolean,
+      required: false,
+    },
     isHideActiveStatus: {
+      //all
+      type: Boolean,
+      required: false,
+    },
+    isStayLoggedIn: {
       //all
       type: Boolean,
       required: false,
@@ -109,12 +119,22 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    isSendTestPushNotifications: {
+      //instructor
+      type: Boolean,
+      required: false,
+    },
     isSendLessonNotifications: {
       //instructor
       type: Boolean,
       required: false,
     },
     isSendLessonEmails: {
+      //instructor
+      type: Boolean,
+      required: false,
+    },
+    isSendLessonPushNotifications: {
       //instructor
       type: Boolean,
       required: false,
@@ -129,6 +149,11 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    isSendAssignmentPushNotifications: {
+      //instructor
+      type: Boolean,
+      required: false,
+    },
     isSendCourseNotifications: {
       //instructor
       type: Boolean,
@@ -139,13 +164,22 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
-    
+    isSendCoursePushNotifications: {
+      //instructor
+      type: Boolean,
+      required: false,
+    },
     isTestNotifications: {
       //student
       type: Boolean,
       required: false,
     },
     isTestEmails: {
+      //student
+      type: Boolean,
+      required: false,
+    },
+    isTestPushNotifications: {
       //student
       type: Boolean,
       required: false,
@@ -160,12 +194,22 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
+    isLessonPushNotifications: {
+      //student
+      type: Boolean,
+      required: false,
+    },
     isAssignmentNotifications: {
       //student
       type: Boolean,
       required: false,
     },
     isAssignmentEmails: {
+      //student
+      type: Boolean,
+      required: false,
+    },
+    isAssignmentPushNotifications: {
       //student
       type: Boolean,
       required: false,
@@ -180,13 +224,25 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
-
+    isCoursePushNotifications: {
+      //student
+      type: Boolean,
+      required: false,
+    },
     //instructor
+    isEnrollNotifications:{
+      type: Boolean,
+      required: false,
+    },
     isEnrollEmails:{
       type: Boolean,
       required: false,
     },
-    isEnrollNotifications:{
+    isEnrollPushNotifications:{
+      type: Boolean,
+      required: false,
+    },
+    isDropCoursePushNotifications:{
       type: Boolean,
       required: false,
     },
@@ -200,11 +256,19 @@ const configurationSchema = new Schema(
     },
 
     //admin
+    isNewInstructorAccountNotifications:{
+      type: Boolean,
+      required: false,
+    },
     isNewInstructorAccountEmails:{
       type: Boolean,
       required: false,
     },
-    isNewInstructorAccountNotifications:{
+    isNewInstructorAccountPushNotifications:{
+      type: Boolean,
+      required: false,
+    },
+    isNewStudentAccountNotifications:{
       type: Boolean,
       required: false,
     },
@@ -212,7 +276,7 @@ const configurationSchema = new Schema(
       type: Boolean,
       required: false,
     },
-    isNewStudentAccountNotifications:{
+    isNewStudentAccountPushNotifications:{
       type: Boolean,
       required: false,
     },

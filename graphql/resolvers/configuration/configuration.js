@@ -2,7 +2,10 @@ const Configuration = require("../../../models/configuration");
 const Course = require("../../../models/course");
 const io = require("../../../socket");
 const Instructor = require("../../../models/instructor");
-const { validateConfiguration } = require("./validate")
+const { validateConfiguration } = require("./validate");
+const { createToken } = require("../authentication/util");
+
+
 module.exports = {
   configuration: async function ({ }, req) {
     let userType;
@@ -101,52 +104,101 @@ module.exports = {
       error.code = 422;
       throw error;
     }
+    const isStayLoggedInChanged = (config.isStayLoggedIn && !configurationInput.isStayLoggedIn) || (!config.isStayLoggedIn && configurationInput.isStayLoggedIn);
+
+
+
+    // isCoursePushNotifications
+    // isLessonPushNotifications
+    // isAssignmentPushNotifications
+    // isTestPushNotifications
+    // isChatPushNotifications
+
+    // isEnrollPushNotifications
+    // isDropCoursePushNotifications
+
+    // isNewInstructorAccountPushNotifications
+    // isNewStudentAccountPushNotifications
+
+    // isSendTestEmails
+    // isSendLessonEmails
+    // isSendAssignmentEmails
+    // isSendCourseEmails
+
+    // isSendTestPushNotifications
+    // isSendLessonPushNotifications
+    // isSendAssignmentPushNotifications
+    // isSendCoursePushNotifications
+
 
     if (userType === "student") {
       config.isTestNotifications = configurationInput.isTestNotifications;
+      config.isTestPushNotifications = configurationInput.isTestPushNotifications;
       config.isTestEmails = configurationInput.isTestEmails;
       config.isLessonNotifications = configurationInput.isLessonNotifications;
+      config.isLessonPushNotifications = configurationInput.isLessonPushNotifications;
       config.isLessonEmails = configurationInput.isLessonEmails;
       config.isAssignmentNotifications =
         configurationInput.isAssignmentNotifications;
+      config.isAssignmentPushNotifications =
+        configurationInput.isAssignmentPushNotifications;
       config.isAssignmentEmails = configurationInput.isAssignmentEmails;
       config.isCourseNotifications = configurationInput.isCourseNotifications;
+      config.isCoursePushNotifications = configurationInput.isCoursePushNotifications;
       config.isCourseEmails = configurationInput.isCourseEmails;
       config.isChatNotifications = configurationInput.isChatNotifications;
+      config.isChatPushNotifications = configurationInput.isChatPushNotifications;
       config.isHideActiveStatus = configurationInput.isHideActiveStatus;
+      config.isStayLoggedIn = configurationInput.isStayLoggedIn;
     }
 
     if (userType === "instructor" && !user.admin) {
       config.isTestNotifications = configurationInput.isTestNotifications;
       config.isTestEmails = configurationInput.isTestEmails;
+      config.isTestPushNotifications = configurationInput.isTestPushNotifications;
       config.isAssignmentNotifications =
         configurationInput.isAssignmentNotifications;
       config.isAssignmentEmails = configurationInput.isAssignmentEmails;
+      config.isAssignmentPushNotifications =
+        configurationInput.isAssignmentPushNotifications;
       config.isSendTestNotifications =
         configurationInput.isSendTestNotifications;
       config.isSendTestEmails = configurationInput.isSendTestEmails;
+      config.isSendTestPushNotifications =
+        configurationInput.isSendTestPushNotifications;
       config.isSendLessonNotifications =
         configurationInput.isSendLessonNotifications;
       config.isSendLessonEmails = configurationInput.isSendLessonEmails;
+      config.isSendLessonPushNotifications =
+        configurationInput.isSendLessonPushNotifications;
       config.isSendAssignmentNotifications =
         configurationInput.isSendAssignmentNotifications;
       config.isSendAssignmentEmails = configurationInput.isSendAssignmentEmails;
+      config.isSendAssignmentPushNotifications =
+        configurationInput.isSendAssignmentPushNotifications;
       config.isSendCourseNotifications =
         configurationInput.isSendCourseNotifications;
       config.isSendCourseEmails = configurationInput.isSendCourseEmails;
+      config.isSendCoursePushNotifications =
+        configurationInput.isSendCoursePushNotifications;
 
       config.isChatAllowedOutsideOfficehours =
         configurationInput.isChatAllowedOutsideOfficehours;
 
       config.isChatNotifications = configurationInput.isChatNotifications;
+      config.isChatPushNotifications = configurationInput.isChatPushNotifications;
 
       config.isEnrollEmails = configurationInput.isEnrollEmails;
       config.isEnrollNotifications = configurationInput.isEnrollNotifications;
+      config.isEnrollPushNotifications = configurationInput.isEnrollPushNotifications;
       config.isDropCourseEmails = configurationInput.isDropCourseEmails;
       config.isDropCourseNotifications =
         configurationInput.isDropCourseNotifications;
+      config.isDropCoursePushNotifications =
+        configurationInput.isDropCoursePushNotifications;
 
       config.isHideActiveStatus = configurationInput.isHideActiveStatus;
+      config.isStayLoggedIn = configurationInput.isStayLoggedIn;
     }
 
     if (userType === "instructor" && user.admin) {
@@ -172,9 +224,12 @@ module.exports = {
       }
       config.isTestNotifications = configurationInput.isTestNotifications;
       config.isTestEmails = configurationInput.isTestEmails;
+      config.isTestPushNotifications = configurationInput.isTestPushNotifications;
       config.isAssignmentNotifications =
         configurationInput.isAssignmentNotifications;
       config.isAssignmentEmails = configurationInput.isAssignmentEmails;
+      config.isAssignmentPushNotifications =
+        configurationInput.isAssignmentPushNotifications;
       config.dropCourseGrade = configurationInput.dropCourseGrade;
       config.isDropCoursePenalty = configurationInput.isDropCoursePenalty;
       config.coursePassGrade = configurationInput.coursePassGrade;
@@ -202,21 +257,29 @@ module.exports = {
       config.blockedStudents = configurationInput.blockedStudents;
       config.blockedInstructors = configurationInput.blockedInstructors;
       config.isChatNotifications = configurationInput.isChatNotifications;
+      config.isChatPushNotifications = configurationInput.isChatPushNotifications;
 
       config.isEnrollEmails = configurationInput.isEnrollEmails;
       config.isEnrollNotifications = configurationInput.isEnrollNotifications;
+      config.isEnrollPushNotifications = configurationInput.isEnrollPushNotifications;
       config.isDropCourseEmails = configurationInput.isDropCourseEmails;
       config.isDropCourseNotifications =
         configurationInput.isDropCourseNotifications;
+      config.isDropCoursePushNotifications =
+        configurationInput.isDropCoursePushNotifications;
 
       config.isNewInstructorAccountEmails =
         configurationInput.isNewInstructorAccountEmails;
       config.isNewInstructorAccountNotifications =
         configurationInput.isNewInstructorAccountNotifications;
+      config.isNewInstructorAccountPushNotifications =
+        configurationInput.isNewInstructorAccountPushNotifications;
       config.isNewStudentAccountEmails =
         configurationInput.isNewStudentAccountEmails;
       config.isNewStudentAccountNotifications =
         configurationInput.isNewStudentAccountNotifications;
+      config.isNewStudentAccountPushNotifications =
+        configurationInput.isNewStudentAccountPushNotifications;
 
       // config.isAllowDeleteStudentAccount =
       //   configurationInput.isAllowDeleteStudentAccount;
@@ -224,25 +287,47 @@ module.exports = {
       //   configurationInput.isAllowDeleteInstructorAccount;
 
       config.isHideActiveStatus = configurationInput.isHideActiveStatus;
+      config.isStayLoggedIn = configurationInput.isStayLoggedIn;
 
       config.isSendTestNotifications =
         configurationInput.isSendTestNotifications;
       config.isSendTestEmails = configurationInput.isSendTestEmails;
+      config.isSendTestPushNotifications =
+        configurationInput.isSendTestPushNotifications;
       config.isSendLessonNotifications =
         configurationInput.isSendLessonNotifications;
       config.isSendLessonEmails = configurationInput.isSendLessonEmails;
+      config.isSendLessonPushNotifications =
+        configurationInput.isSendLessonPushNotifications;
       config.isSendAssignmentNotifications =
         configurationInput.isSendAssignmentNotifications;
       config.isSendAssignmentEmails = configurationInput.isSendAssignmentEmails;
+      config.isSendAssignmentPushNotifications =
+        configurationInput.isSendAssignmentPushNotifications;
       config.isSendCourseNotifications =
         configurationInput.isSendCourseNotifications;
       config.isSendCourseEmails = configurationInput.isSendCourseEmails;
-
-      io.getIO().emit("updateConfig", {
-        userType: "all",
-      });
+      config.isSendCoursePushNotifications =
+        configurationInput.isSendCoursePushNotifications;
     }
     await config.save();
-    return true;
+
+    let newTokenData;
+    if (isStayLoggedInChanged) {
+      console.log('change in stay logged in')
+      const expirationTime = config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_EXPIRATION_TIME;
+      const refreshTokenExpiration = Date.now() + parseInt(config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_REFRESH_TIME_LIMIT) * 1000;
+      const token = createToken(userType, user._id, user.email, expirationTime);
+      newTokenData = {
+        token,
+        expiresIn: expirationTime,
+        refreshTokenExpiration,
+      }
+    }
+
+    io.getIO().emit("updateConfig", {
+      userType: "all",
+    });
+    return newTokenData;
   },
 };

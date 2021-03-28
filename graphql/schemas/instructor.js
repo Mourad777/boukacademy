@@ -94,7 +94,7 @@ module.exports = buildSchema(`
         lastName: String!
         email: String!
         password: String,
-        dob: String!
+        dob: String
         language:String!
         coursesTeaching:[Course]
         profilePicture:String

@@ -26,8 +26,8 @@ const { clearHash } = require("../../../util/cache");
 const lodash = require("lodash");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-const {pushNotify} = require("../../../util/pushNotification")
-
+const { pushNotify } = require("../../../util/pushNotification")
+//notification.save()
 module.exports = {
   createCourse: async function ({ courseInput }, req) {
     if (!req.instructorIsAuth) {
@@ -146,6 +146,8 @@ module.exports = {
     });
 
     const isSendEmails = instructorConfig.isSendCourseEmails;
+    const isSendPushNotifications = instructorConfig.isSendCoursePushNotifications;
+    console.log('instructorConfig',instructorConfig)
     const prevRegOfficeHours = course.regularOfficeHours.map((o) => {
       return { day: o.day, startTime: o.startTime, endTime: o.endTime };
     });
@@ -205,11 +207,14 @@ module.exports = {
     const adminSettings = admin._doc.configuration;
     const grade = adminSettings.dropCourseGrade
     const isDropCoursePenalty = adminSettings.isDropCoursePenalty
+    const docUrl = `student-panel/courses/syllabus/${course._id}`
     const notificationOptions = {
-      users:studentIdsEnrolled,
-      multipleUsers:true,
-      course:course,
-      grade:grade,
+      users: studentIdsEnrolled,
+      multipleUsers: true,
+      course: course,
+      grade: grade,
+      url: docUrl,
+      condition: 'isCoursePushNotifications',
     }
     if (
       (prevDropDeadline || "").toString() !==
@@ -224,17 +229,21 @@ module.exports = {
         course: course._id,
       });
       //push notifications
-    
-     await pushNotify({...notificationOptions,content:isDropCoursePenalty ? "courseDropDeadline" : "courseDropDeadlineChanged",})
+      if (isSendPushNotifications) {
+        console.log('-----------------------------------------------------------isSendPushNotifications1',isSendPushNotifications)
+        await pushNotify({ ...notificationOptions, content: isDropCoursePenalty ? "courseDropDeadline" : "courseDropDeadlineChanged", })
+      }
       if (isSendEmails) {
         const content = "courseDropDeadline";
         const subject = "courseDropDeadlineChanged";
         await sendEmailsToStudents({
           studentIdsEnrolled,
           course: updatedCourse,
-          content:isDropCoursePenalty ? content : subject,
+          content: isDropCoursePenalty ? content : subject,
           subject,
-          condition: 'isCourseEmails'
+          condition: 'isCourseEmails',
+          buttonText: "courseDetails",
+          buttonUrl: docUrl,
         });
       }
     }
@@ -253,7 +262,10 @@ module.exports = {
         documentId: course._id,
         course: course._id,
       });
-      await pushNotify({...notificationOptions,content:"officeHoursUpdatedFor",})
+      if (isSendPushNotifications) {
+        console.log('-----------------------------------------------------------isSendPushNotifications2',isSendPushNotifications)
+        await pushNotify({ ...notificationOptions, content: "officeHoursUpdatedFor", })
+      }
       if (isSendEmails) {
         const content = "officeHoursUpdatedFor";
         const subject = "officeHoursUpdated";
@@ -262,7 +274,9 @@ module.exports = {
           course: updatedCourse,
           content,
           subject,
-          condition: 'isCourseEmails'
+          condition: 'isCourseEmails',
+          buttonText: "courseDetails",
+          buttonUrl: docUrl,
         });
       }
     }
@@ -662,6 +676,7 @@ module.exports = {
               speakingQuestions: fixedSpeakingQuestions,
               readingMaterials: [],
               audioMaterials: [],
+              videoMaterials: [],
               fillInBlanksQuestions: {
                 text: "",
                 blanks: fixedFillInBlanksQuestions,
@@ -1093,14 +1108,17 @@ module.exports = {
     // await student.save();
     await course.save();
     await notification.save();
+    const docUrl = `instructor-panel/course/${course._id}/students/requested/${student._id}`
     const notificationOptions = {
-      multipleUsers:false,
-      course:course,
-      userId:course.courseInstructor,
-      isInstructorRecieving:true,
+      multipleUsers: false,
+      course: course,
+      userId: course.courseInstructor,
+      isInstructorRecieving: true,
       student,
+      url: docUrl,
+      condition: 'isEnrollPushNotifications',
     }
-    await pushNotify({...notificationOptions,content:"courseEnrollRequest"})
+    await pushNotify({ ...notificationOptions, content: "courseEnrollRequest" })
     await sendEmailToOneUser({
       userId: course.courseInstructor,
       course,
@@ -1108,7 +1126,9 @@ module.exports = {
       content: 'courseEnrollRequest',
       student,
       condition: 'isEnrollEmails',
-      userType: 'instructor'
+      userType: 'instructor',
+      buttonText: 'userDetails',
+      buttonUrl: docUrl,
     });
     clearHash(course._id);
     io.getIO().emit("updateCourses", {
@@ -1146,7 +1166,8 @@ module.exports = {
       throw error;
     }
     const isSendNotifications = config.isSendCourseNotifications
-    const isSendEmails = config.isSendCourseEmails
+    const isSendEmails = config.isSendCourseEmails || !instructor
+    const isSendPushNotifications = config.isSendCoursePushNotifications || !instructor
 
     if (!student) {
       const error = new Error("No student found");
@@ -1230,19 +1251,26 @@ module.exports = {
     await course.save();
     if (isSendNotifications || !instructor) await notification.save();
     let userId;
-    if(!!instructor)userId = student._id
-    if(!instructor)userId = course.courseInstructor
+    if (!!instructor) userId = student._id
+    if (!instructor) userId = course.courseInstructor
+
+    const docUrl = !!instructor ? `student-panel/course/${course._id}/modules` : `instructor-panel/course/${course._id}/students/enrolled/${studentId}`;
     const notificationOptions = {
-      multipleUsers:false,
-      content:!!instructor ? "courseEnrollApprove" : 'autoEnroll',
-      course:course,
+      multipleUsers: false,
+      content: !!instructor ? "courseEnrollApprove" : 'autoEnroll',
+      course: course,
       userId,
       student,
-      isStudentRecieving:!!instructor,
-      isInstructorRecieving:!instructor,
+      instructor,
+      isStudentRecieving: !!instructor,
+      isInstructorRecieving: !instructor,
+      url: docUrl,
+      condition: !!instructor ? 'isCoursePushNotifications' : "isEnrollPushNotifications",
     }
-    await pushNotify(notificationOptions)
-    if (isSendEmails || !instructor) {
+    if (isSendPushNotifications) {
+      await pushNotify(notificationOptions)
+    }
+    if (isSendEmails) {
       await sendEmailToOneUser({
         userId: !!instructor ? studentId : course.courseInstructor,
         course,
@@ -1251,6 +1279,8 @@ module.exports = {
         student,
         condition: !!instructor ? 'isCourseEmails' : "isEnrollEmails",
         userType: !!instructor ? 'student' : 'instructor',
+        buttonUrl: docUrl,
+        buttonText: !!instructor ? 'yourAccount' : 'userDetails'
       });
     }
     clearHash(course._id);
@@ -1298,6 +1328,7 @@ module.exports = {
     }
     const isSendNotifications = instructorConfig.isSendCourseNotifications
     const isSendEmails = instructorConfig.isSendCourseEmails
+    const isSendPushNotifications = instructorConfig.isSendCoursePushNotifications;
     await Notification.deleteMany({
       documentType: {
         $in: ["courseEnrollDeny", "courseEnrollApprove"],
@@ -1361,14 +1392,19 @@ module.exports = {
     await student.save();
     if (isSendNotifications) await notification.save();
     clearHash(course._id);
+    const docUrl = 'student-panel/courses';
     const notificationOptions = {
-      multipleUsers:false,
+      multipleUsers: false,
       content: 'courseEnrollDeny',
-      course:course,
-      userId:studentId,
-      isStudentRecieving:true,
+      course: course,
+      userId: studentId,
+      isStudentRecieving: true,
+      url: docUrl,
+      condition: 'isCoursePushNotifications',
     }
-    await pushNotify(notificationOptions)
+    if (isSendPushNotifications) {
+      await pushNotify(notificationOptions)
+    }
     if (isSendEmails) {
       await sendEmailToOneUser({
         userId: studentId,
@@ -1377,7 +1413,9 @@ module.exports = {
         content: 'courseEnrollDeny',
         student,
         condition: 'isCourseEmails',
-        userType: 'student'
+        userType: 'student',
+        buttonText: "yourAccount",
+        buttonUrl: docUrl,
       });
     }
 
@@ -1487,13 +1525,16 @@ module.exports = {
     const studentWithNewCourse = await student.save();
     await course.save();
     clearHash(course._id);
+    const docUrl = `instructor-panel/course/${course._id}/students/enrolled/${student._id}`;
     const notificationOptions = {
-      multipleUsers:false,
+      multipleUsers: false,
       content: 'courseDrop',
-      course:course,
-      userId:course.courseInstructor,
-      isInstructorRecieving:true,
+      course: course,
+      userId: course.courseInstructor,
+      isInstructorRecieving: true,
       student,
+      url: docUrl,
+      condition: 'isDropCoursePushNotifications',
     }
     await pushNotify(notificationOptions)
     await sendEmailToOneUser({
@@ -1503,7 +1544,9 @@ module.exports = {
       content: 'courseDrop',
       student,
       condition: 'isDropCourseEmails',
-      userType: 'instructor'
+      userType: 'instructor',
+      buttonText: "userDetails",
+      buttonUrl: docUrl,
     });
     io.getIO().emit("updateCourses", {
       userType: "all",
@@ -1547,9 +1590,10 @@ module.exports = {
       const error = new Error("No configuration found!");
       error.code = 404;
       throw error;
-    }
-    const isSendNotifications = instructorConfig.isSendCourseNotifications
-    const isSendEmails = instructorConfig.isSendCourseEmails
+    };
+    const isSendNotifications = instructorConfig.isSendCourseNotifications;
+    const isSendEmails = instructorConfig.isSendCourseEmails;
+    const isSendPushNotifications = instructorConfig.isSendCoursePushNotifications;
     if (!student) {
       const error = new Error("No student found");
       error.code = 401;
@@ -1640,16 +1684,20 @@ module.exports = {
     await course.save();
     if (isSendNotifications) await notification.save();
     const notificationOptions = {
-      multipleUsers:false,
+      multipleUsers: false,
       content: notificationContent[0],
-      course:course,
-      userId:studentId,
-      isStudentRecieving:true,
+      course: course,
+      userId: studentId,
+      isStudentRecieving: true,
       student,
       passed,
       grade,
+      url: 'transcript',
+      condition: 'isCoursePushNotifications',
     }
-    await pushNotify(notificationOptions)
+    if (isSendPushNotifications) {
+      await pushNotify(notificationOptions)
+    }
     if (isSendEmails) {
       await sendEmailToOneUser({
         userId: studentId,
@@ -1661,6 +1709,8 @@ module.exports = {
         userType: 'student',
         grade,
         passed,
+        buttonText: 'transcript',
+        buttonUrl: 'transcript'
       });
     }
     clearHash(course._id);

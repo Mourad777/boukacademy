@@ -136,7 +136,7 @@ const validateAccountUpdate = async (accountInput, req) => {
     });
   }
 
-  if (accountInput.newPassword) {
+  if (accountInput.newPassword && loggedInUser.password) {
     if (
       !accountInput.currentPassword ||
       validator.isEmpty(accountInput.currentPassword || "")
@@ -168,16 +168,20 @@ const validateAccountUpdate = async (accountInput, req) => {
     });
   }
 
-  if (
-    validator.isEmpty(accountInput.dob || "") ||
-    !moment(accountInput.dob).isValid() ||
-    !accountInput.dob
-  ) {
-    errors.push({ message: "A valid date of birth is required" });
-  }
-  if (!(Date.now() - new Date(accountInput.dob).getTime() > 31449600000 * 3)) {
-    errors.push({ message: "User must be atleast 3 years old" });
-  }
+  // if (
+  //   validator.isEmpty(accountInput.dob || "") ||
+  //   !moment(accountInput.dob).isValid() ||
+  //   !accountInput.dob
+  // ) {
+  //   errors.push({ message: "A valid date of birth is required" });
+  // }
+
+  // if (!(Date.now() - new Date(accountInput.dob).getTime() > 31449600000 * 3)) {
+  //   errors.push({ message: "User must be atleast 3 years old" });
+  // }
+
+
+
   // const allowedGenders = ["male", "female", "other"];
   // if (
   //   validator.isEmpty(accountInput.sex || "") ||

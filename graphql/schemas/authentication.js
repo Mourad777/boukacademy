@@ -31,11 +31,12 @@ module.exports = buildSchema(`
         profilePicture:String
         lastLogin:String
         language:String!
-        dob:String!
+        dob:String
         email:String!
         documents:[Doc]
         admin:Boolean
         configuration:ConfigData
+        isPassword:Boolean!
     }
 
     type UserData {
@@ -57,12 +58,23 @@ module.exports = buildSchema(`
         documentType:String!
     }
 
+    input Key {
+        auth:String
+        p256dh:String
+    }
+
+    input Sub {
+        expirationTime:Float
+        endpoint:String
+        keys:Key
+    }
+
     input AccountInputData {
         id:ID
         firstName: String!
         lastName: String!
         email: String!
-        dob: String!
+        dob: String
         password:String
         currentPassword: String
         newPassword: String
@@ -70,14 +82,15 @@ module.exports = buildSchema(`
         profilePicture:String
         accountType:String!
         documents: [Document]
+        notificationSubscription: Sub
     }
 
     type RootQuery {
-        userLogin(email: String!, password: String!, userType: String!): UserData!
         user: User!
     }
 
     type RootMutation {
+        userLogin(email: String!, password: String, userType: String!,notificationSubscription: Sub): UserData!
         createAccount(accountInput: AccountInputData): User!
         updateAccount(accountInput: AccountInputData): String
         verifyAccount(token:String!, password:String!): UserData!

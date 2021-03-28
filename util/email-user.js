@@ -11,7 +11,7 @@ const sendEmailToOneUser = async ({
   course = {},
   student = {},
   condition,
-  userType:userTypeReciever,//usertype that will be recieving the email
+  userType: userTypeReciever,//usertype that will be recieving the email
   userTypeSender,
   grade,
   passed,
@@ -19,63 +19,103 @@ const sendEmailToOneUser = async ({
   test = {},
   message,
   instructor,
+  buttonText,
+  buttonUrl,
 }) => {
+  console.log('test.testName', test.testName)
+  console.log('content', content)
+  console.log('date', date)
+  console.log('subject', subject)
 
+  if (!content) return
   const User = require(`../models/${userTypeReciever}`);
   const user = await User.findById(userId);
   const userConfig = await Configuration.findOne({ user: userId });
   const language = user.language;
   //check to see if student has allowed this type of email notification
-  let isRecieveEmails,primaryText,secondaryText,buttonText,buttonUrl;
-  if(condition) {
+  let isRecieveEmails, primaryText, secondaryText, translatedButtonText, url;
+  if (condition) {
     isRecieveEmails = userConfig[condition];
   }
   if (isRecieveEmails || !condition) {
     let firstName, lastName;
-    if (userTypeSender === 'student'|| !userTypeSender) {
-      firstName = (student||{}).firstName
-      lastName = (student||{}).lastName
+    if (userTypeSender === 'student' || !userTypeSender) {
+      firstName = (student || {}).firstName
+      lastName = (student || {}).lastName
     }
 
     if (userTypeSender === 'instructor') {
-      firstName = (instructor||{}).firstName
-      lastName = (instructor||{}).lastName
+      firstName = (instructor || {}).firstName
+      lastName = (instructor || {}).lastName
     }
     i18n.setLocale(language);
-    const passOrFail = passed ? i18n.__("passed") : i18n.__("failed");
-     primaryText = i18n.__(
+    let passOrFail;
+    if (passed === true) {
+      passOrFail = i18n.__("passed")
+    }
+    if (passed === false) {
+      passOrFail = i18n.__("failed")
+    }
+    console.log('content', content)
+    console.log('firstName', firstName, 'lastname', lastName)
+
+    primaryText = i18n.__(
       content,
       {
         courseName: (course || {}).courseName,
-        date,
-        grade,
-        firstName:firstName||'',
-        lastName:lastName||'',
-        passOrFail,
-        grade,
-        workName: test.testName,
-        message,
+        date: date || '',
+        grade: grade || '',
+        firstName: firstName || '',
+        lastName: lastName || '',
+        passOrFail: passOrFail || '',
+        workName: test.testName || '',
+        messag: message || '',
         testOrAssignment: test.assignment
           ? i18n.__("assignment")
           : i18n.__("test"),
         aOrAn: test.assignment ? 'an' : 'a',
       }
     );
-    if(secondaryContent) secondaryText = secondaryContent
+    if (buttonText) {
+      translatedButtonText = i18n.__(buttonText, {
+        testOrAssignment: test.assignment
+          ? i18n.__("assignment")
+          : i18n.__("test"),
+      });
+    }
+    if (buttonUrl) {
+      url = process.env.APP_URL + buttonUrl;
+    }
+    if (secondaryContent) secondaryText = secondaryContent
+    
     transporter.sendMail({
       from: "e-learn@learn.com",
       to: user.email,
       subject: i18n.__(subject, {
-        courseName: (course || {}).courseName,
+        courseName: (course || {}).courseName || '',
         testOrAssignment: test.assignment
           ? i18n.__("assignment")
           : i18n.__("test"),
         aOrAn: test.assignment ? 'an' : 'a',
       }),
-      html:emailTemplate(primaryText,secondaryText,buttonText,buttonUrl),
+      // html:emailTemplate(primaryText,secondaryText,translatedButtonText,url),
+      html: emailTemplate(primaryText, secondaryText, null, translatedButtonText, url),
     });
   }
-
 };
 
 exports.sendEmailToOneUser = sendEmailToOneUser;
+
+// transporter.sendMail({
+//   from: "e-learn@learn.com",
+//   to: user.email,
+//   subject: i18n.__(subject, {
+//     courseName: (course || {}).courseName||'',
+//     testOrAssignment: test.assignment
+//       ? i18n.__("assignment")
+//       : i18n.__("test"),
+//     aOrAn: test.assignment ? 'an' : 'a',
+//   }),
+//   // html:emailTemplate(primaryText,secondaryText,translatedButtonText,url),
+//   text:emailTemplate(primaryText,secondaryText,translatedButtonText,url),
+// });

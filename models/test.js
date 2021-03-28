@@ -230,6 +230,18 @@ const testSchema = new Schema({
       }
     },
   ],
+  videoMaterials: [
+    {
+      section: {
+        type: String,
+        required: false,
+      },
+      video: {
+        type: String,
+        required: false,
+      },
+    },
+  ],
 },
 {
   timestamps:true

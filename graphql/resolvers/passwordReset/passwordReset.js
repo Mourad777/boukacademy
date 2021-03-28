@@ -1,10 +1,11 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const xss = require("xss");
 const { transporter } = require("../../../util/transporter");
+const { createToken } = require("../authentication/util");
 const { noHtmlTags } = require("../validation/xssWhitelist");
-
+const { i18n } = require("../../../i18n.config");
+const { emailTemplate } = require("../../../util/email-template");
 
 module.exports = {
   passwordResetInitialize: async function ({ passwordResetInitializeInput }) {
@@ -26,26 +27,27 @@ module.exports = {
       error.code = 401;
       throw error;
     }
-    const token = jwt.sign(
-      {
-        [accountType + "Id"]: user._id.toString(),
-        email: user.email,
-      },
-      process.env.SECRET,
-      { expiresIn: "1h" }
-    );
+
+    if (!user.password) {
+      const error = new Error('noPasswordCreated');
+      error.code = 401;
+      throw error;
+    }
+    
+    const token = createToken(accountType, user._id, user.email, process.env.SESSION_EXPIRATION_TIME);
     user.passwordResetToken = token;
     user.passwordResetTokenExpiration = tokenExpiry;
     await user.save();
 
+    const language = user.language;
+    i18n.setLocale(language);
+    const buttonUrl = `${process.env.APP_URL}reset/${accountType}/${token}`;
+    const buttonText = i18n.__("reset");
     transporter.sendMail({
       from: "e-learn@learn.com",
-      to: passwordResetInitializeInput.email,
-      subject: "Password reset",
-      html: `
-          <p>You requested a password reset</p>
-          <p>Click this <a href="${process.env.APP_URL}reset/${accountType}/${token}">link</a> to set a new password.</p>
-      `,
+      to: user.email,
+      subject: i18n.__("passwordResetSubject"),
+      html: emailTemplate(i18n.__("passwordReset"), null, null,buttonText , buttonUrl),
     });
 
     return { token: token };

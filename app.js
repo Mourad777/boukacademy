@@ -3,13 +3,16 @@ const multer = require("multer");
 const bodyParser = require("body-parser");
 const port = process.env.PORT || 8080;
 const app = express();
-const redis = require("redis");
-const client = redis.createClient(process.env.REDIS_URL);
+// const redis = require("redis");
+// const client = redis.createClient(process.env.REDIS_URL);
 const path = require("path");
 const Instructor = require("./models/instructor");
+const Student = require("./models/student");
 const webpush = require('web-push')
 const publicVapidKey = process.env.PUBLIC_VAPID_KEY
 const privateVapidKey = process.env.PRIVATE_VAPID_KEY
+
+const Configuration = require('./models/configuration')
 
 const {
   onNotifyOfDocUpdate,
@@ -38,6 +41,7 @@ const { s3, getObjectUrl } = require("./s3");
 require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
+const student = require("./models/student");
 
 const multerUpload = multer().any();
 
@@ -70,8 +74,9 @@ webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVa
 
 app.post('/subscribe', async (req, res) => {
   const subscription = req.body
-  console.log('subscription', subscription)
-  console.log('req.userId', req.userId)
+  console.log('push recieved')
+  // console.log('subscription', subscription)
+  // console.log('req.userId', req.userId)
   let userType;
   if (req.instructorIsAuth) {
     userType = 'instructor'
@@ -128,7 +133,7 @@ app.put("/upload", async (req, res, next) => {
   if (req.instructorIsAuth) maxFileSize = instructorMaxFileSize * 1000000; // 100mb
   if (req.studentIsAuth) maxFileSize = studentMaxFileSize * 1000000; // 25mb
   const params = {
-    Bucket: "e-learn-bucket",
+    Bucket: process.env.AWS_BUCKET,
     Fields: {
       key: key,
     },
@@ -179,7 +184,7 @@ app.put("/delete-files", (req, res, next) => {
     ];
   }
   const params = {
-    Bucket: "e-learn-bucket",
+    Bucket: process.env.AWS_BUCKET,
     Delete: {
       Objects: object,
     },
@@ -230,6 +235,101 @@ mongoose
     }
   )
   .then(async (result) => {
+
+    // await Configuration.updateMany({},{isChatPushNotifications:true},{multi:true})
+
+
+
+
+    // const admin = await Instructor.findOne({ admin: true });
+    // const instructors = await Instructor.find({ admin: false });
+    // const students = await Student.find()
+
+    // const adminId = admin._id;
+    // const instructorIds = instructors.map(ins => ins._id);
+    // const studentIds = students.map(stu => stu._id);
+    // console.log('adminId: ', adminId._id);
+    // console.log('instructorIds :', instructorIds);
+    // console.log('studentIds', studentIds)
+
+
+
+
+    // await Configuration.updateMany({ user: adminId }, {
+    //   isChatPushNotifications: true,
+
+    //   isAssignmentPushNotifications: true,
+    //   isTestPushNotifications: true,
+    //   isChatPushNotifications: true,
+
+    //   isEnrollPushNotifications: true,
+    //   isDropCoursePushNotifications: true,
+
+    //   isNewInstructorAccountPushNotifications:true,
+    //   isNewStudentAccountPushNotifications:true,
+
+    //   isSendTestPushNotifications: true,
+    //   isSendLessonPushNotifications: true,
+    //   isSendAssignmentPushNotifications: true,
+    //   isSendCoursePushNotifications: true,
+    //   isStayLoggedIn:true,
+
+    // }, { multi: true });
+
+    // await Promise.all(
+    //   instructorIds.map(async instId => {
+    //     await Configuration.updateMany({ user: instId }, {
+
+    //       isSendTestPushNotifications: true,
+    //       isSendLessonPushNotifications: true,
+    //       isSendAssignmentPushNotifications: true,
+    //       isSendCoursePushNotifications: true,
+
+    //       isAssignmentPushNotifications: true,
+    //       isTestPushNotifications: true,
+    //       isChatPushNotifications: true,
+
+    //       isEnrollPushNotifications: true,
+    //       isDropCoursePushNotifications: true,
+
+    //       isStayLoggedIn:true,
+    //     }, { multi: true })
+    //   })
+    // )
+
+    // await Promise.all(
+    //   studentIds.map(async stuId => {
+    //     await Configuration.updateMany({ user: stuId }, {
+
+    //       isCoursePushNotifications: true,
+    //       isLessonPushNotifications: true,
+    //       isAssignmentPushNotifications: true,
+    //       isTestPushNotifications: true,
+    //       isChatPushNotifications: true,
+
+    //       isStayLoggedIn:true,
+
+    //     }, { multi: true })
+    //   })
+    // )
+
+    // isCoursePushNotifications
+    // isLessonPushNotifications
+    // isAssignmentPushNotifications
+    // isTestPushNotifications
+    // isChatPushNotifications
+
+    // isEnrollPushNotifications
+    // isDropCoursePushNotifications
+
+    // isNewInstructorAccountPushNotifications
+    // isNewStudentAccountPushNotifications
+
+
+    // isSendTestPushNotifications
+    // isSendLessonPushNotifications
+    // isSendAssignmentPushNotifications
+    // isSendCoursePushNotifications
     console.log("connected to mongoose");
 
     const expressServer = app.listen(port);

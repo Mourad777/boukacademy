@@ -6,10 +6,7 @@ const Student = require("../models/student");
 const moment = require("moment");
 const momentTZ = require("moment-timezone");
 const { emailTemplate } = require("./email-template");
-// list-style: none;
-//     background-color: grey;
-//     padding: 5px;
-
+const { getReadableDate } = require("../util/getReadableDate");
 
 const getOfficehourTemplate = (course, language) => {
   let weeklyOfficeHours = "";
@@ -18,16 +15,14 @@ const getOfficehourTemplate = (course, language) => {
     const tz = momentTZ(new Date(Date.now()))
       .tz(item.timezoneRegion)
       .format("z");
-    otherOfficeHours += ` <li style="list-style:none;background-color:${
-      index % 2 === 0 ? "#fafafa" : "white"
-    }; padding:20px;font-family:sans-serif;font-weight:400;color:black;">
+    otherOfficeHours += ` <li style="list-style:none;background-color:${index % 2 === 0 ? "#fafafa" : "white"
+      }; padding:20px;font-family:sans-serif;font-weight:400;color:black;">
             <p>${moment(parseInt(new Date(item.date).getTime()))
-              .locale(language)
-              .format("MMMM DD YYYY")}
+        .locale(language)
+        .format("MMMM DD YYYY")}
             </p>
-            <p>${i18n.__("from")} ${item.startTime} ${i18n.__("to")} ${
-      item.endTime
-    } ${tz}
+            <p>${i18n.__("from")} ${item.startTime} ${i18n.__("to")} ${item.endTime
+      } ${tz}
             </p>
           </li>`;
   });
@@ -36,41 +31,30 @@ const getOfficehourTemplate = (course, language) => {
     const tz = momentTZ(new Date(Date.now()))
       .tz(item.timezoneRegion)
       .format("z");
-    weeklyOfficeHours += ` <li style="list-style:none;background-color:${
-      index % 2 === 0 ? "#fafafa" : "white"
-    }; padding:20px;font-family:sans-serif;font-weight:400;color:black;">
+    weeklyOfficeHours += ` <li style="list-style:none;background-color:${index % 2 === 0 ? "#fafafa" : "white"
+      }; padding:20px;font-family:sans-serif;font-weight:400;color:black;">
             <p>${i18n.__(`${item.day.toLowerCase()}`)}
             </p>
-            <p>${i18n.__("from")} ${item.startTime} ${i18n.__("to")} ${
-      item.endTime
-    } ${tz}
+            <p>${i18n.__("from")} ${item.startTime} ${i18n.__("to")} ${item.endTime
+      } ${tz}
             </p>
           </li>`;
   });
   let officehourTemplate = `
   <div>
-  <h3 style="font-family:sans-serif;font-weight:400;color:black;">${
-    weeklyOfficeHours ? i18n.__("weeklyOfficeHours") : ""
-  }</h3>
+  <h3 style="font-family:sans-serif;font-weight:400;color:black;">${weeklyOfficeHours ? i18n.__("weeklyOfficeHours") : ""
+    }</h3>
   <ul style="padding-left:0;">
   ${weeklyOfficeHours}
   </ul>
-  <h3 style="font-family:sans-serif;font-weight:400;color:black;">${
-    weeklyOfficeHours ? i18n.__("specificDateOfficeHours") : ""
-  }</h3>
+  <h3 style="font-family:sans-serif;font-weight:400;color:black;">${weeklyOfficeHours ? i18n.__("specificDateOfficeHours") : ""
+    }</h3>
   <ul style="padding-left:0;">
       ${otherOfficeHours}
   </ul>
   </div>
   `;
   return officehourTemplate;
-};
-
-const getReadableDate = (date, language) => {
-  const readableDate = date
-    ? momentTZ(date).locale(language).format("MMMM DD YYYY HH:mm z")
-    : "";
-  return readableDate;
 };
 
 const getEmailContent = (
@@ -83,6 +67,7 @@ const getEmailContent = (
   grade,
   language
 ) => {
+  console.log('getting email content, test:', test)
   const emailContent = i18n.__(content, {
     courseName: course.courseName,
     lessonName: lesson.lessonName,
@@ -112,12 +97,15 @@ const sendEmailsToStudents = async ({
   lesson = {},
   test = {},
   condition,
+  buttonText,
+  buttonUrl,
 }) => {
+  console.log('studentIdsEnrolled', studentIdsEnrolled)
   await Promise.all(
     studentIdsEnrolled.map(async (st) => {
       const studentConfig = await Configuration.findOne({ user: st });
       const student = await Student.findById(st);
-      if(!student)return null;
+      if (!student) return null;
       const language = student.language;
       const email = student.email;
       //check to see if student has allowed this type of email notification
@@ -151,10 +139,11 @@ const sendEmailsToStudents = async ({
             date,
             dateSecondary,
             grade,
-            language
+            language,
           )}
           </h2>`;
         }
+
         if (Array.isArray(content)) {
           content.forEach((item) => {
             emailData += `
@@ -175,36 +164,50 @@ const sendEmailsToStudents = async ({
         }
 
         const primaryText = `
-        ${
-          Array.isArray(content)
-            ? 
-           i18n.__(subject, {
-            courseName: course.courseName,
-            testOrAssignment: test.assignment
-            ? i18n.__("assignment")
-            : i18n.__("test"),
-            workName:test.testName
-        })
+        ${Array.isArray(content)
+            ?
+            i18n.__(subject, {
+              courseName: course.courseName,
+              testOrAssignment: test.assignment
+                ? i18n.__("assignment")
+                : i18n.__("test"),
+              workName: test.testName
+            })
             : ""
-        }
+          }
         `
         const secondaryText = emailData
         const tertiaryText = subContent
-
-        const html = emailTemplate(primaryText,secondaryText,tertiaryText);
-
-        transporter.sendMail({
-          from: "e-learn@learn.com",
-          to: email,
-          subject: i18n.__(subject, {
-            courseName: course.courseName,
+        let translatedButtonText, url;
+        if (buttonText) {
+          translatedButtonText = i18n.__(buttonText, {
             testOrAssignment: test.assignment
               ? i18n.__("assignment")
               : i18n.__("test"),
-            workName:test.testName
-          }),
-          html,
-        });
+          }
+          );
+        }
+        if (buttonUrl) {
+          url = process.env.APP_URL + buttonUrl
+        }
+        console.log('primaryText', primaryText)
+        console.log('secondaryText', secondaryText)
+        const html = emailTemplate(primaryText, secondaryText, tertiaryText, translatedButtonText, url);
+        if (email === 'mourad777b@gmail.com') {
+          transporter.sendMail({
+            from: "e-learn@learn.com",
+            to: email,
+            subject: i18n.__(subject, {
+              courseName: course.courseName,
+              testOrAssignment: test.assignment
+                ? i18n.__("assignment")
+                : i18n.__("test"),
+              workName: test.testName
+            }),
+            html: html,
+          });
+        }
+
       }
     })
   );

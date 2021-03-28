@@ -102,28 +102,33 @@ module.exports = {
     await course.save();
     if (instructorConfig.isSendLessonNotifications) await notification.save();
     const isSendEmails = instructorConfig.isSendLessonEmails;
+    const isSendPushNotifications = instructorConfig.isSendLessonPushNotifications;
 
     const studentIdsEnrolled = course.studentsEnrollRequests.map((rq) => {
       if (rq.approved) {
         return rq.student;
       }
     });
+    const isLessonAvailable = (new Date((createdLesson.availableOnDate || "").toString()).getTime() < Date.now()) || !createdLesson.availableOnDate;
+    const docUrl = isLessonAvailable ? `student-panel/course/${lessonInput.course}/lesson/${createdLesson._id}/preview` : `student-panel/course/${lessonInput.course}/lessons`
     const notificationOptions = {
-      multipleUsers:true,
-      users:studentIdsEnrolled,
-      content:'newLessonSubject',
-      course:course,
-      lesson:createdLesson,
+      multipleUsers: true,
+      users: studentIdsEnrolled,
+      content: 'newLessonSubject',
+      course: course,
+      lesson: createdLesson,
+      url: docUrl,
+      condition: 'isLessonPushNotifications',
     }
-    await pushNotify(notificationOptions)
-    if (isSendEmails) {
-      let content = "newLesson";
-      let subject = "newLessonSubject";
-      let date;
-      if (!isLessonReleaseDate && lessonReleaseDate) {
-        date = new Date(lessonInput.availableOnDate).getTime()
-        content = "newLessonLaterDate";
-      }
+    if (lessonInput.published) {
+      if (isSendEmails) {
+        let content = "newLesson";
+        let subject = "newLessonSubject";
+        let date;
+        if (!isLessonReleaseDate && lessonReleaseDate) {
+          date = new Date(lessonInput.availableOnDate).getTime()
+          content = "newLessonLaterDate";
+        }
 
         await sendEmailsToStudents({
           studentIdsEnrolled,
@@ -132,10 +137,17 @@ module.exports = {
           subject,
           date,
           lesson: createdLesson,
-          condition: 'isLessonEmails'
+          condition: 'isLessonEmails',
+          buttonText: !isLessonReleaseDate && lessonReleaseDate ? "" : 'viewLesson',
+          buttonUrl: !isLessonReleaseDate && lessonReleaseDate ? "" : docUrl,
         });
-      
+
+      }
+      if (isSendPushNotifications) {
+        await pushNotify(notificationOptions)
+      }
     }
+
 
     io.getIO().emit("updateCourses", {
       userType: "student",
@@ -289,18 +301,24 @@ module.exports = {
         return rq.student;
       }
     });
+    const isLessonAvailable = (new Date((lessonInput.availableOnDate || "").toString()).getTime() < Date.now()) || !lessonInput.availableOnDate
+    const docUrl = isLessonAvailable ? `student-panel/course/${lesson.course}/lesson/${lesson._id}/preview` : `student-panel/course/${lesson.course}/lessons`;
     const notificationOptions = {
-      multipleUsers:true,
-      users:studentIdsEnrolled,
-      content:!lesson.published ? 'newLessonSubject' : 'lessonUpdatedSubject',
-      course:course,
+      multipleUsers: true,
+      users: studentIdsEnrolled,
+      content: !lesson.published ? 'newLessonSubject' : 'lessonUpdatedSubject',
+      course: course,
       lesson,
+      url: docUrl,
+      condition: 'isLessonPushNotifications',
     }
-    if(lessonInput.published) {
+    const isSendPushNotifications = instructorConfig.isSendLessonPushNotifications;
+    if (lessonInput.published && isSendPushNotifications) {
       await pushNotify(notificationOptions)
     }
 
     const isSendEmails = instructorConfig.isSendLessonEmails;
+
     if (isSendEmails && lessonInput.published) {
       let content = "lessonUpdated";
       let subject = "lessonUpdatedSubject";
@@ -324,7 +342,9 @@ module.exports = {
         subject,
         date,
         lesson,
-        condition: 'isLessonEmails'
+        condition: 'isLessonEmails',
+        buttonText: !isLessonReleaseDate && lessonReleaseDate ? "" : 'viewLesson',
+        buttonUrl: !isLessonReleaseDate && lessonReleaseDate ? "" : docUrl,
       });
 
     }
@@ -338,7 +358,6 @@ module.exports = {
     io.getIO().emit("updateCourses", {
       userType: "student",
     });
-
 
     return {
       ...updatedLesson._doc,

@@ -45,7 +45,7 @@ module.exports = buildSchema(`
         lastName: String!
         email: String!
         password: String,
-        dob: String!
+        dob: String
         language:String!
         profilePicture:String
         blockedContacts:[String]
@@ -114,6 +114,7 @@ module.exports = buildSchema(`
         blockedNotes: Boolean!
         readingMaterials: [ReadingMaterial]
         audioMaterials: [AudioMaterial]
+        videoMaterials: [VideoMaterial]
         createdAt: String
         completed:Boolean
     }
@@ -128,6 +129,11 @@ module.exports = buildSchema(`
         audio: String
         section: String
         fileUpload: Boolean
+    }
+
+    type VideoMaterial {
+        video: String
+        section: String
     }
 
     type SectionWeight {

@@ -46,6 +46,7 @@
 	"accountReactivatedSubject": "Cuenta reactivada",
 	"accountReactivated": "Tu cuenta ha sido reactivada",
 	"newWorkPosted": "Se publicó una nueva {{testOrAssignment}}: {{workName}}",
+	"workUpdated": "Se actualizó la {{testOrAssignment}} {{workName}}",
 	"newWorkPostedSubject": "Se publicó una nueva {{testOrAssignment}}",
 	"changeWorkDueDate": "La fecha de vencimiento de la {{testOrAssignment}} {{workName}} se cambió a {{dateSecondary}}",
 	"removeWorkDueDate": "La fecha de vencimiento de la {{testOrAssignment}} se eliminó, se puede enviar en cualquier momento",
@@ -82,10 +83,20 @@
 	},
 	"verifyAccountEmail": "Haga clic en el enlace de abajo para verificar su cuenta.",
 	"verifyAccountEmailSubject": "Verifica su cuenta.",
-	"buttons": {
-		"confirm": "Confirmar"
-	},
+	"confirm": "Confirmar",
 	"courseDrop": "{{firstName}} {{lastName}} dejó el curso {{courseName}}.",
-	"newMessageFromInstructor":"Nuevo mensaje del profesor",
-	"newMessageFromStudent":"Nuevo mensaje de {{firstName}}"
+	"newMessageFromInstructor": "Nuevo mensaje del profesor",
+	"newMessageFromStudent": "Nuevo mensaje de {{firstName}}",
+	"viewLesson": "Ver lección",
+	"viewTest": "Ver la {{testOrAssignment}}",
+	"userDetails": "Detalles de usario",
+	"yourAccount": "Su cuenta",
+	"transcript": "Transcrito",
+	"courseDetails": "Detalles del curso",
+	"passwordReset": "Ha solicitado restablecer su contraseña, haga clic en el enlace para establecer una nueva contraseña",
+	"passwordResetSubject": "Restablecimiento de contraseña",
+	"reset": "Restablecer",
+	"sentFile":"{{firstName}} te envió un {{fileType}}",
+	"file":"archivo", 
+	"video":"video"
 }

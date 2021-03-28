@@ -11,7 +11,7 @@ const { getObjectUrl } = require("../s3");
 const client = redis.createClient(process.env.REDIS_URL);
 const io = require("../socket");
 const { pushNotify } = require("../util/pushNotification");
-
+const { i18n } = require("../i18n.config");
 //important notes 
 //the whole point of storing the user id with the socket id
 //is to have a private channel for 2 users to communicate
@@ -124,7 +124,7 @@ const onIdle = (socket) => {
 const onJoin = (socket) => {
   socket.on("join", async (data) => {
     const recipient = data.recipient;
-    const dmRoom = [recipient._id, socket.userId].sort().join("");
+    const dmRoom = [recipient, socket.userId].sort().join("");
 
     //leave previous room
     const previousRoom = Object.keys(socket.rooms)[1];
@@ -137,8 +137,8 @@ const onJoin = (socket) => {
 
     const retrievedMessages = await Message.find({
       $or: [
-        { type: "chat", sender: recipient._id, recipient: socket.userId },
-        { type: "chat", sender: socket.userId, recipient: recipient._id },
+        { type: "chat", sender: recipient, recipient: socket.userId },
+        { type: "chat", sender: socket.userId, recipient: recipient },
       ],
     })
       .sort({ createdAt: -1 })
@@ -186,19 +186,20 @@ const onInitializeContacts = (socket) => {
 const onLeave = (socket) => {
   socket.on("leave", async (data) => {
     const recipient = data.recipient;
-    const dmRoom = [recipient._id, socket.userId].sort().join("");
+    const dmRoom = [recipient, socket.userId].sort().join("");
     socket.leave(dmRoom);
   });
 };
 
 const onMessage = (socket) => {
   socket.on("message", async (msg) => {
-    const userType = require(`../models/${msg.userType}`);
+    const User = require(`../models/${msg.userTypeSender}`);
     if(!msg.content && !msg.file){
       return
     }
-    const user = await userType.findById(socket.userId);
-    if (!user) {
+
+    const userSender = await User.findById(socket.userId);
+    if (!userSender) {
       const error = new Error("No user found");
       error.code = 401;
       throw error;
@@ -222,8 +223,8 @@ const onMessage = (socket) => {
     }
 
     //check if communication is between student and instructor
-    const studentIsSender = socket.studentIsAuth;
-    const instructorIsSender = socket.instructorIsAuth;
+    const studentIsSender = msg.userTypeSender === 'student'
+    const instructorIsSender = msg.userTypeSender === 'instructor'
     let commStudentInstructor;
     let instructor;
     let student;
@@ -238,6 +239,8 @@ const onMessage = (socket) => {
       if (student) commStudentInstructor = true;
     }
 
+    const recipientUser = await require(`../models/${msg.userTypeRecipient}`).findById(msg.recipient._id);
+
     const config = await Configuration.findOne({
       user: course.courseInstructor,
     });
@@ -247,12 +250,12 @@ const onMessage = (socket) => {
       throw error;
     }
     const chatAlwaysAllowed = config.isChatAllowedOutsideOfficehours;
-    if (commStudentInstructor) {
-      const isValid = chatAlwaysAllowed
-        ? true
-        : validateOfficehour(course, instructor, student);
-      if (!isValid) return;
-    }
+    // if (commStudentInstructor) {
+    //   const isValid = chatAlwaysAllowed
+    //     ? true
+    //     : validateOfficehour(course, instructor, student);
+    //   if (!isValid) return;
+    // }
     const dmRoom = [socket.userId, msg.recipient._id].sort().join("");
     // Create a message with the content and the name of the user.
     const message = new Message({
@@ -278,37 +281,47 @@ const onMessage = (socket) => {
       },
       null,
       async () => {
+
+        const onlyFileNotification = !msg.content && !!msg.file;
+        const fileExtension = (msg.file ||"")
+        .toLowerCase()
+        .split(".")
+        .pop();
+
+        let fileType = 'file';
+        if(fileExtension === 'mp4' || fileExtension === 'webm')fileType = 'video';
+        i18n.setLocale(recipientUser.language);
+        const processedContent = onlyFileNotification ? i18n.__("sendFile",{
+          firstName:userSender.firstName,
+          fileType:i18n.__(fileType)
+        }) : msg.content;
+
         const notification = new Notification({
           toUserType: "unique",
           fromUser: socket.userId,
           toSpecificUser: msg.recipient._id,
-          avatar: user.profilePicture,
-          senderFirstName: user.firstName,
-          senderLastName: user.lastName,
-          content: [(msg.content || "").slice(0, 20) + "..."],
+          avatar: userSender.profilePicture,
+          senderFirstName: userSender.firstName,
+          senderLastName: userSender.lastName,
+          content: [(processedContent || "").slice(0, 20) + "..."],
           documentType: "chat",
           documentId: newMessage._id,
           course: msg.course,
         });
 
         const newNotification = await notification.save();
-        console.log('msg.recipient._id',msg.recipient._id)
-        let sender;
 
         try {
           const notificationOptions = {
             multipleUsers:false,
-            content:msg.content,
+            content:onlyFileNotification ? processedContent : msg.content,
             isIM:true,
             course:msg.course,
             userId:msg.recipient._id,
-            imSender:user,
-            isImSenderInstructor:msg.userType === "instructor",
-            // isStudentRecieving: !!student,
-            // isInstructorRecieving:!!instructor,
-            // student,
-            // isStudentRecieving:!!instructor,
-            // isInstructorRecieving:!instructor,
+            imSender:userSender,
+            isImSenderInstructor:msg.userTypeSender === "instructor",
+            url:`${msg.userTypeRecipient}-panel/course/${msg.course}/chat/user/${socket.userId}`,
+            condition:"isChatPushNotifications"
           }
           await pushNotify(notificationOptions)
         } catch(e){
@@ -335,10 +348,10 @@ const onMessage = (socket) => {
             //check if already in chat room, if thats the case do not emit
             const sender = {
               _id: socket.userId,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              avatar: await getObjectUrl(user.profilePicture),
-              type: msg.userType,
+              firstName: userSender.firstName,
+              lastName: userSender.lastName,
+              avatar: await getObjectUrl(userSender.profilePicture),
+              type: msg.userTypeSender,
             };
             const socketId = userData;
             socket.to(socketId).emit("alert", {

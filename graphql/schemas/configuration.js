@@ -5,6 +5,8 @@ module.exports = buildSchema(`
         _id:ID!
         user:ID!
         isChatNotifications:Boolean!
+        isChatPushNotifications:Boolean!
+        isStayLoggedIn:Boolean!
         isHideActiveStatus:Boolean!
         dropCourseGrade:Float
         isDropCoursePenalty:Boolean
@@ -25,30 +27,42 @@ module.exports = buildSchema(`
 
         isSendTestNotifications:Boolean
         isSendTestEmails:Boolean
+        isSendTestPushNotifications:Boolean
         isSendLessonNotifications:Boolean
         isSendLessonEmails:Boolean
+        isSendLessonPushNotifications:Boolean
         isSendAssignmentNotifications:Boolean
         isSendAssignmentEmails:Boolean
+        isSendAssignmentPushNotifications:Boolean
         isSendCourseNotifications:Boolean
         isSendCourseEmails:Boolean
+        isSendCoursePushNotifications:Boolean
 
         isTestNotifications:Boolean
         isTestEmails:Boolean
+        isTestPushNotifications:Boolean
         isLessonNotifications:Boolean
         isLessonEmails:Boolean
+        isLessonPushNotifications:Boolean
         isAssignmentNotifications:Boolean
         isAssignmentEmails:Boolean
+        isAssignmentPushNotifications:Boolean
         isCourseNotifications:Boolean
         isCourseEmails:Boolean
+        isCoursePushNotifications:Boolean
 
-        isEnrollEmails:Boolean
         isEnrollNotifications:Boolean
-        isDropCourseEmails:Boolean
+        isEnrollEmails:Boolean
+        isEnrollPushNotifications:Boolean
         isDropCourseNotifications:Boolean
-        isNewInstructorAccountEmails:Boolean
+        isDropCourseEmails:Boolean
+        isDropCoursePushNotifications:Boolean
         isNewInstructorAccountNotifications:Boolean
-        isNewStudentAccountEmails:Boolean
+        isNewInstructorAccountEmails:Boolean
+        isNewInstructorAccountPushNotifications:Boolean
         isNewStudentAccountNotifications:Boolean
+        isNewStudentAccountEmails:Boolean
+        isNewStudentAccountPushNotifications:Boolean
         isAllowDeleteStudentAccount:Boolean
         isAllowDeleteInstructorAccount:Boolean
 
@@ -59,6 +73,8 @@ module.exports = buildSchema(`
 
     input ConfigurationInputData {
         isChatNotifications:Boolean!
+        isChatPushNotifications:Boolean!
+        isStayLoggedIn:Boolean!
         isHideActiveStatus: Boolean!
         dropCourseGrade: Float
         isDropCoursePenalty: Boolean
@@ -78,28 +94,40 @@ module.exports = buildSchema(`
         isChatAllowedOutsideOfficehours:Boolean
         isSendTestNotifications:Boolean
         isSendTestEmails:Boolean
+        isSendTestPushNotifications:Boolean
         isSendLessonNotifications:Boolean
         isSendLessonEmails:Boolean
+        isSendLessonPushNotifications:Boolean
         isSendAssignmentNotifications:Boolean
         isSendAssignmentEmails:Boolean
+        isSendAssignmentPushNotifications:Boolean
         isSendCourseNotifications:Boolean
         isSendCourseEmails:Boolean
+        isSendCoursePushNotifications:Boolean
         isTestNotifications:Boolean
         isTestEmails:Boolean
+        isTestPushNotifications:Boolean
         isLessonNotifications:Boolean
         isLessonEmails:Boolean
+        isLessonPushNotifications:Boolean
         isAssignmentNotifications:Boolean
         isAssignmentEmails:Boolean
+        isAssignmentPushNotifications:Boolean
         isCourseNotifications:Boolean
         isCourseEmails:Boolean
-        isEnrollEmails:Boolean
+        isCoursePushNotifications:Boolean
         isEnrollNotifications:Boolean
-        isDropCourseEmails:Boolean
+        isEnrollEmails:Boolean
+        isEnrollPushNotifications:Boolean
         isDropCourseNotifications:Boolean
-        isNewInstructorAccountEmails:Boolean
+        isDropCourseEmails:Boolean
+        isDropCoursePushNotifications:Boolean
         isNewInstructorAccountNotifications:Boolean
-        isNewStudentAccountEmails:Boolean
+        isNewInstructorAccountEmails:Boolean
+        isNewInstructorAccountPushNotifications:Boolean
         isNewStudentAccountNotifications:Boolean
+        isNewStudentAccountEmails:Boolean
+        isNewStudentAccountPushNotifications:Boolean
         isAllowDeleteStudentAccount:Boolean
         isAllowDeleteInstructorAccount:Boolean
 
@@ -107,12 +135,18 @@ module.exports = buildSchema(`
         blockedStudentsChat:[ID]
     }
 
+    type NewTokenData {
+        expiresIn:Int
+        refreshTokenExpiration:Float
+        token:String
+    }
+
     type RootQuery {
         configuration: Configuration!
     }
 
     type RootMutation {
-        updateConfiguration(configurationInput: ConfigurationInputData): Boolean
+        updateConfiguration(configurationInput: ConfigurationInputData): NewTokenData
     }
 
     schema {

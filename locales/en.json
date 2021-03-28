@@ -47,6 +47,7 @@
 	"lessonUpdated": "The lesson {{lessonName}} was updated",
 	"lessonUpdatedDateChanged": "The lesson {{lessonName}} was updated and can now be accessed after {{date}}",
 	"newWorkPosted": "A new {{testOrAssignment}} was posted: {{workName}}",
+	"workUpdated": "The {{testOrAssignment}} {{workName}} was updated",
 	"newWorkPostedSubject": "A new {{testOrAssignment}} was posted",
 	"changeWorkDueDate": "The {{testOrAssignment}} {{workName}} {{dueDateOrCloseDate}} changed to {{dateSecondary}}",
 	"removeWorkDueDate": "The {{testOrAssignment}} {{dueDateOrCloseDate}} was removed, it can now be submitted at any time",
@@ -88,12 +89,24 @@
 	"Innapropriate content": "Innapropriate content",
 	"verifyAccountEmail": "Click the link below to verify your account.",
 	"verifyAccountEmailSubject": "Verify your account",
-	"buttons": {
-		"confirm": "Confirm"
-	},
+	"confirm": "Confirm",
 	"hey": "hey",
 	"hey!": "hey!",
 	"..": "..",
-	"newMessageFromInstructor":"New message from instructor",
-	"newMessageFromStudent":"New message from {{firstName}}"
+	"newMessageFromInstructor": "New message from instructor",
+	"newMessageFromStudent": "New message from {{firstName}}",
+	"viewLesson": "View lesson",
+	"viewTest": "View {{testOrAssignment}}",
+	"userDetails": "User details",
+	"yourAccount": "Your account",
+	"transcript": "Transcript",
+	"courseDetails": "Course details",
+	"passwordReset": "You have requested to reset your password, click the link below to set a new password",
+	"passwordResetSubject": "Password reset",
+	"reset": "Reset",
+	"buttons.confirm": "buttons.confirm",
+	"sentFile": "{{firstName}} sent you a {{fileType}}",
+	"file": "file",
+	"video": "video",
+	"sendFile": "{{firstName}} sent you a {{fileType}}"
 }

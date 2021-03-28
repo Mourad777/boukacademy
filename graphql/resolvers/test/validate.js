@@ -394,6 +394,52 @@ const validateTest = async (
       });
     }
   });
+  (testInput.videoMaterials || []).forEach((material, index) => {
+    //************sanitize material.video for xss *************/
+    if (!materialSections.includes(material.section)) {
+      errors.push({
+        message:
+          "video material section should be one of the following: multipleChoice,essay,speaking,fillInTheBlanks,test",
+      });
+    }
+    // if (!validator.isBoolean(material.fileUpload + "")) {
+    //   errors.push({
+    //     message: "video material fileupload must be true or false",
+    //   });
+    // }
+    if (index === 0 && !isMcSection && !validator.isEmpty(material.video)) {
+      errors.push({
+        message:
+          "There should not be multiple-choice section audio materials since the section was not selected",
+      });
+    }
+    if (index === 1 && !isEssaySection && !validator.isEmpty(material.video)) {
+      errors.push({
+        message:
+          "There should not be essay section video materials since the section was not selected",
+      });
+    }
+    if (
+      index === 3 &&
+      !isSpeakingSection &&
+      !validator.isEmpty(material.video)
+    ) {
+      errors.push({
+        message:
+          "There should not be speaking section video materials since the section was not selected",
+      });
+    }
+    if (
+      index === 3 &&
+      !isFillblankSection &&
+      !validator.isEmpty(material.video)
+    ) {
+      errors.push({
+        message:
+          "There should not be fill-in-the-blanks section video materials since the section was not selected",
+      });
+    }
+  });
   //multiple-choice section validation
   if (isMcSection) {
     (multipleChoiceQuestionsInput || []).forEach((item, index) => {

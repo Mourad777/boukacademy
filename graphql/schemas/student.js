@@ -34,6 +34,7 @@ module.exports = buildSchema(`
         endTime: String
         readingMaterials: [ReadingMaterial]
         audioMaterials: [AudioMaterial]
+        videoMaterials: [VideoMaterial]
         createdAt: String
     }
 
@@ -47,6 +48,11 @@ module.exports = buildSchema(`
         audio: String
         section: String
         fileUpload: Boolean
+    }
+
+    type VideoMaterial {
+        video: String
+        section: String
     }
 
     type FillBlanksSection {
