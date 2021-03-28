@@ -89,7 +89,7 @@ const sendEmailToOneUser = async ({
     if (secondaryContent) secondaryText = secondaryContent
     
     transporter.sendMail({
-      from: "e-learn@learn.com",
+      from: "boukacademy@learn.com",
       to: user.email,
       subject: i18n.__(subject, {
         courseName: (course || {}).courseName || '',

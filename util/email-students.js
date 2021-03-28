@@ -193,9 +193,9 @@ const sendEmailsToStudents = async ({
         console.log('primaryText', primaryText)
         console.log('secondaryText', secondaryText)
         const html = emailTemplate(primaryText, secondaryText, tertiaryText, translatedButtonText, url);
-        if (email === 'mourad777b@gmail.com') {
+    
           transporter.sendMail({
-            from: "e-learn@learn.com",
+            from: "boukacademy@learn.com",
             to: email,
             subject: i18n.__(subject, {
               courseName: course.courseName,
@@ -206,7 +206,7 @@ const sendEmailsToStudents = async ({
             }),
             html: html,
           });
-        }
+        
 
       }
     })

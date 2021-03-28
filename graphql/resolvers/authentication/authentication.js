@@ -132,7 +132,7 @@ module.exports = {
         }
 
         // transporter.sendMail({
-        //   from: "e-learn@learn.com",
+        //   from: "boukacademy@learn.com",
         //   to: accountInput.email,
         //   subject: i18n.__("verifyAccountEmailSubject"),
         //   html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
@@ -382,7 +382,7 @@ module.exports = {
     console.log('subject', i18n.__("verifyAccountEmailSubject"))
     console.log('buttonText', buttonText)
     transporter.sendMail({
-      from: "e-learn@learn.com",
+      from: "boukacademy@learn.com",
       to: accountInput.email,
       subject: subject,
       html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
@@ -413,7 +413,7 @@ module.exports = {
       const createdUser = await user.save();
 
       // transporter.sendMail({
-      //   from: "e-learn@learn.com",
+      //   from: "boukacademy@learn.com",
       //   to: accountInput.email,
       //   subject: i18n.__("verifyAccountEmailSubject"),
       //   html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
@@ -601,7 +601,7 @@ module.exports = {
     const buttonUrl = `${process.env.APP_URL}verify-account/${accountType}/${token}`
     const buttonText = i18n.__("confirm")
     transporter.sendMail({
-      from: "e-learn@learn.com",
+      from: "boukacademy@learn.com",
       to: email,
       subject: i18n.__("verifyAccountEmailSubject"),
       html: emailTemplate(primaryText, secondaryText, tertiaryText, buttonText, buttonUrl)

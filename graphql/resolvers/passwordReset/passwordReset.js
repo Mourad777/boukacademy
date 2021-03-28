@@ -44,7 +44,7 @@ module.exports = {
     const buttonUrl = `${process.env.APP_URL}reset/${accountType}/${token}`;
     const buttonText = i18n.__("reset");
     transporter.sendMail({
-      from: "e-learn@learn.com",
+      from: "boukacademy@learn.com",
       to: user.email,
       subject: i18n.__("passwordResetSubject"),
       html: emailTemplate(i18n.__("passwordReset"), null, null,buttonText , buttonUrl),

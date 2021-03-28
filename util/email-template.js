@@ -1,3 +1,4 @@
+
 const emailTemplateHead = `
 <head>
   <style type="text/css">
@@ -100,7 +101,7 @@ ${emailTemplateHead}
         <table cellspacing="0" cellpadding="0" width="100%" style="background-color:#2196f3">
           <tr>
             <td class="header-md" width="100%" height="80" valign="top" style="text-align: center; vertical-align:middle;">
-             <span style="color:white;"> E Learn </span>
+             <span style="color:white;"> Boukacademy </span>
             </td>
           </tr>
         </table>
