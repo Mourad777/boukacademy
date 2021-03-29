@@ -48,8 +48,9 @@ const { bucketCleanup } = require("./util/awsBucketCleanup");
 
 const multerUpload = multer().any();
 
-app.get('*', function(req, res) {  
-  res.redirect('https://' + req.headers.host + req.url);
+app.get('*', function(req, res) {
+  console.log('redirect to :','https://' + process.env.APP_URL + req.url)
+  res.redirect('https://' + process.env.APP_URL + req.url);
 })
 
 app.use(multerUpload);
