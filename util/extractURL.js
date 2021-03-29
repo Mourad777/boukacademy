@@ -1,8 +1,6 @@
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 require("dotenv").config();
-// const dom = new jsdom.JSDOM(`<!DOCTYPE html><p>Hello world</p>`);
-// dom.window.document.querySelector("p").textContent;
 
 const getUrlsFromString = (string = "") => {
   const urls = Array.from(
@@ -36,7 +34,7 @@ const getKeysFromString = (string) => {
   } else {
     if (string.includes(process.env.AWS_BASE_URL)) addToDeleteList(string);
   }
-  return urls;
+  return urls||[];
 };
 
 exports.getUrlsFromString = getUrlsFromString;

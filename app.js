@@ -12,6 +12,8 @@ const webpush = require('web-push')
 const publicVapidKey = process.env.PUBLIC_VAPID_KEY
 const privateVapidKey = process.env.PRIVATE_VAPID_KEY
 
+const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
+
 const Configuration = require('./models/configuration')
 
 const {
@@ -42,6 +44,7 @@ require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
 const student = require("./models/student");
+const { bucketCleanup } = require("./util/awsBucketCleanup");
 
 const multerUpload = multer().any();
 
@@ -93,14 +96,14 @@ app.post('/subscribe', async (req, res) => {
 })
 
 app.put("/upload", async (req, res, next) => {
-  console.log('!req.instructorIsAuth && !req.studentIsAuth',!req.instructorIsAuth && !req.studentIsAuth)
+  console.log('!req.instructorIsAuth && !req.studentIsAuth', !req.instructorIsAuth && !req.studentIsAuth)
   if (!req.instructorIsAuth && !req.studentIsAuth) {
     return res.status(401).json({ message: "Not authenticated!" });
   }
   const key = req.body.key;
   const fileType = req.body.fileType;
   const fileExtension =
-    key.substring(key.lastIndexOf(".") + 1, key.length) || key;
+    (key.substring(key.lastIndexOf(".") + 1, key.length) || key||"").toLowerCase();
 
   const acceptedExtensions = [
     "jpeg",
@@ -120,11 +123,11 @@ app.put("/upload", async (req, res, next) => {
     "webm",
   ];
 
-  const capitializedExtenstions = acceptedExtensions.map(ext=>ext.toUpperCase());
+  // const capitializedExtenstions = acceptedExtensions.map(ext => ext.toUpperCase());
 
-  const allExtensions = [...acceptedExtensions,...capitializedExtenstions];
-  console.log('allExtensions',allExtensions)
-  if (!allExtensions.includes(fileExtension)) {
+  // const allExtensions = [...acceptedExtensions, ...capitializedExtenstions];
+
+  if (!acceptedExtensions.includes(fileExtension)) {
     return res.status(401).json({ message: "File type not allowed" });
   }
 
@@ -230,6 +233,8 @@ app.use((req, res, next) => {
   res.sendFile(path.resolve(__dirname, "public", "index.html"));
 });
 
+mongoose.disconnect
+
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0-lfeej.mongodb.net/${process.env.DB_NAME}`,
@@ -242,99 +247,17 @@ mongoose
   )
   .then(async (result) => {
 
-    // await Configuration.updateMany({},{isChatPushNotifications:true},{multi:true})
+    const scheduler = new ToadScheduler()
 
+    const task = new Task('simple task', () => {
 
+      bucketCleanup()
+      console.log('run task')
+    })
+    const job = new SimpleIntervalJob({ days: 7, }, task)
 
+    scheduler.addSimpleIntervalJob(job)
 
-    // const admin = await Instructor.findOne({ admin: true });
-    // const instructors = await Instructor.find({ admin: false });
-    // const students = await Student.find()
-
-    // const adminId = admin._id;
-    // const instructorIds = instructors.map(ins => ins._id);
-    // const studentIds = students.map(stu => stu._id);
-    // console.log('adminId: ', adminId._id);
-    // console.log('instructorIds :', instructorIds);
-    // console.log('studentIds', studentIds)
-
-
-
-
-    // await Configuration.updateMany({ user: adminId }, {
-    //   isChatPushNotifications: true,
-
-    //   isAssignmentPushNotifications: true,
-    //   isTestPushNotifications: true,
-
-    //   isEnrollPushNotifications: true,
-    //   isDropCoursePushNotifications: true,
-
-    //   isNewInstructorAccountPushNotifications:true,
-    //   isNewStudentAccountPushNotifications:true,
-
-    //   isSendTestPushNotifications: true,
-    //   isSendLessonPushNotifications: true,
-    //   isSendAssignmentPushNotifications: true,
-    //   isSendCoursePushNotifications: true,
-    //   isStayLoggedIn:true,
-
-    // }, { multi: true });
-
-    // await Promise.all(
-    //   instructorIds.map(async instId => {
-    //     await Configuration.updateMany({ user: instId }, {
-
-    //       isSendTestPushNotifications: true,
-    //       isSendLessonPushNotifications: true,
-    //       isSendAssignmentPushNotifications: true,
-    //       isSendCoursePushNotifications: true,
-
-    //       isAssignmentPushNotifications: true,
-    //       isTestPushNotifications: true,
-    //       isChatPushNotifications: true,
-
-    //       isEnrollPushNotifications: true,
-    //       isDropCoursePushNotifications: true,
-
-    //       isStayLoggedIn:true,
-    //     }, { multi: true })
-    //   })
-    // )
-
-    // await Promise.all(
-    //   studentIds.map(async stuId => {
-    //     await Configuration.updateMany({ user: stuId }, {
-
-    //       isCoursePushNotifications: true,
-    //       isLessonPushNotifications: true,
-    //       isAssignmentPushNotifications: true,
-    //       isTestPushNotifications: true,
-    //       isChatPushNotifications: true,
-
-    //       isStayLoggedIn:true,
-
-    //     }, { multi: true })
-    //   })
-    // )
-
-    // isCoursePushNotifications
-    // isLessonPushNotifications
-    // isAssignmentPushNotifications
-    // isTestPushNotifications
-    // isChatPushNotifications
-
-    // isEnrollPushNotifications
-    // isDropCoursePushNotifications
-
-    // isNewInstructorAccountPushNotifications
-    // isNewStudentAccountPushNotifications
-
-
-    // isSendTestPushNotifications
-    // isSendLessonPushNotifications
-    // isSendAssignmentPushNotifications
-    // isSendCoursePushNotifications
     console.log("connected to mongoose");
 
     const expressServer = app.listen(port);

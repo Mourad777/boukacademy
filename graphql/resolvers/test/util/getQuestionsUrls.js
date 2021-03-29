@@ -3,7 +3,7 @@ const { getKeysFromString } = require("../../../../util/extractURL");
 const getQuestionsUrls = (questions) => {
     const filesToNotDelete = []
     const imageStrings = questions.map((item) => {
-        if (item.question !== "" && item.question) {
+        if (!!item.question) {
           return item.question;
         }
       });
@@ -13,10 +13,10 @@ const getQuestionsUrls = (questions) => {
       });
       //push audio files to the list of files to not delete
       questions.forEach((item) => {
-        if (item.questionAudio !== "" && item.questionAudio) {
+        if (!!item.questionAudio) {
           filesToNotDelete.push(item.questionAudio);
         }
-        if (item.audio !== "" && item.audio) {
+        if (!!item.audio) {
           filesToNotDelete.push(item.audio);
         }
         if (item.blanks) {
