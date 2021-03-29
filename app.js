@@ -48,10 +48,17 @@ const { bucketCleanup } = require("./util/awsBucketCleanup");
 
 const multerUpload = multer().any();
 
-app.get('*', function(req, res) {
-  console.log('redirect to :','https://' + process.env.APP_URL + req.url)
-  res.redirect('https://' + process.env.APP_URL + req.url);
-})
+// app.get('*', function(req, res) {
+//   console.log('redirect to :','https://' + process.env.APP_URL + req.url)
+//   res.redirect('https://' + process.env.APP_URL + req.url);
+// })
+
+app.use(function(req, res, next) {
+  if ((req.get('X-Forwarded-Proto') !== 'https')) {
+    res.redirect('https://' + req.get('Host') + req.url);
+  } else
+    next();
+});
 
 app.use(multerUpload);
 app.use(bodyParser.json());
