@@ -48,6 +48,10 @@ const { bucketCleanup } = require("./util/awsBucketCleanup");
 
 const multerUpload = multer().any();
 
+app.get('*', function(req, res) {  
+  res.redirect('https://' + req.headers.host + req.url);
+})
+
 app.use(multerUpload);
 app.use(bodyParser.json());
 
@@ -247,6 +251,7 @@ mongoose
   )
   .then(async (result) => {
 
+    //task to run once a month to check the database for unused
     const scheduler = new ToadScheduler()
 
     const task = new Task('simple task', () => {
