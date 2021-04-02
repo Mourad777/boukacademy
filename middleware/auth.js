@@ -126,10 +126,13 @@ module.exports = async (req, res, next) => {
     console.log('token', token)
     try {
       console.log('trying to get ticket')
-      ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
+      if(token){
+        ticket = await client.verifyIdToken({
+          idToken: token,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+      }
+
       console.log('ticket...: ', ticket)
     } catch (e) {
       console.log('failed to get google ticket')
