@@ -66,7 +66,7 @@ if(os.hostname().indexOf("local") === -1){
 
 
 app.use(multerUpload);
-app.use(bodyParser.json());
+app.use(express.json());
 
 
 app.use((req, res, next) => {
@@ -102,62 +102,6 @@ app.use(auth);
 // app.use(rawBody);
 
 webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVapidKey)
-
-function rawBody(req, res, next) {
-	req.setEncoding('utf8');
-
-	var data = '';
-
-	req.on('data', function (chunk) {
-		data += chunk;
-	});
-
-	req.on('end', function () {
-		req.rawBody = data;
-
-		next();
-	});
-}
-
-app.post('/', function (req, res) {
-  var event;
-
-  console.log(req.headers);
-  // let data = '';
-  try {
-    
-    // req.on('data', function (chunk) {
-    //     data += chunk;
-    // });
-
-    // req.on('end', function () {
-    //     req.rawBody = data;
-    // });
-
-
-    event = Webhook.verifyEventBody(
-      // data,
-      req.rawBody,
-      req.headers['x-cc-webhook-signature'],
-      process.env.COIN_BASE_WEBHOOK_SECRET
-    );
-  } catch (error) {
-    console.log('Error occured', error.message);
-
-    return res.status(400).send('Webhook Error:' + error.message);
-  }
-
-  console.log('recieved event: ', event)
-
-  console.log('Success', event.id);
-
-  io.getIO().emit("cryptoChargeEvent", {
-    userType: "all",
-    event
-  });
-
-  res.status(200).send('Signed Webhook Received: ' + event.id);
-});
 
 app.post('/subscribe', async (req, res) => {
   const subscription = req.body
@@ -315,6 +259,58 @@ app.use(
 
 app.use((req, res, next) => {
   res.sendFile(path.resolve(__dirname, "public", "index.html"));
+});
+
+
+function rawBody(req, res, next) {
+	req.setEncoding('utf8');
+
+	var data = '';
+
+	req.on('data', function (chunk) {
+    console.log('chunk')
+		data += chunk;
+	});
+
+	req.on('end', function () {
+		req.rawBody = data;
+
+		next();
+	});
+}
+
+app.post('/', function (req, res) {
+  var event;
+
+  console.log('req.headers',req.headers);
+
+  try {
+
+    console.log('verifying webhook...');
+    console.log('req.body',req.body);
+    event = Webhook.verifyEventBody(
+      // data,
+      // req.rawBody,
+      req.body,
+      req.headers['x-cc-webhook-signature'],
+      process.env.COIN_BASE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    console.log('Error occured', error.message);
+
+    return res.status(400).send('Webhook Error:' + error.message);
+  }
+
+  console.log('recieved event: ', event)
+
+  console.log('Success', event.id);
+
+  io.getIO().emit("cryptoChargeEvent", {
+    userType: "all",
+    event
+  });
+
+  res.status(200).send('Signed Webhook Received: ' + event.id);
 });
 
 app.use(rawBody);
