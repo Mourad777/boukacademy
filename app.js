@@ -82,37 +82,37 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(rawBody);
+// app.use(rawBody);
 
 
-app.post('/', function (req, res) {
-  var event;
+// app.post('/', function (req, res) {
+//   var event;
 
-  console.log(req.headers);
+//   console.log(req.headers);
 
-  try {
-    event = Webhook.verifyEventBody(
-      req.rawBody,
-      req.headers['x-cc-webhook-signature'],
-      process.env.COIN_BASE_WEBHOOK_SECRET
-    );
-  } catch (error) {
-    console.log('Error occured', error.message);
+//   try {
+//     event = Webhook.verifyEventBody(
+//       req.rawBody,
+//       req.headers['x-cc-webhook-signature'],
+//       process.env.COIN_BASE_WEBHOOK_SECRET
+//     );
+//   } catch (error) {
+//     console.log('Error occured', error.message);
 
-    return res.status(400).send('Webhook Error:' + error.message);
-  }
+//     return res.status(400).send('Webhook Error:' + error.message);
+//   }
 
-  console.log('recieved event: ', event)
+//   console.log('recieved event: ', event)
 
-  console.log('Success', event.id);
+//   console.log('Success', event.id);
 
-  io.getIO().emit("cryptoChargeEvent", {
-    userType: "all",
-    event
-  });
+//   io.getIO().emit("cryptoChargeEvent", {
+//     userType: "all",
+//     event
+//   });
 
-  // res.status(200).send('Signed Webhook Received: ' + event.id);
-});
+//   // res.status(200).send('Signed Webhook Received: ' + event.id);
+// });
 
 
 
