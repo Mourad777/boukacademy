@@ -13,14 +13,14 @@ module.exports = async (req, res, next) => {
     req.instructorIsAuth = false;
     console.log('next')
     next();
-    return
+    
   }
 
 
 
 
 
-  const token = authHeader.split(' ')[1];
+  const token = (authHeader||"").split(' ')[1];
   let userType, id, errorMessage;
   if (!token || token === "undefined") {
     console.log('no token')
