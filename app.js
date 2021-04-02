@@ -82,37 +82,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use(rawBody);
 
 
-// app.post('/', function (req, res) {
-//   var event;
 
-//   console.log(req.headers);
 
-//   try {
-//     event = Webhook.verifyEventBody(
-//       req.rawBody,
-//       req.headers['x-cc-webhook-signature'],
-//       process.env.COIN_BASE_WEBHOOK_SECRET
-//     );
-//   } catch (error) {
-//     console.log('Error occured', error.message);
-
-//     return res.status(400).send('Webhook Error:' + error.message);
-//   }
-
-//   console.log('recieved event: ', event)
-
-//   console.log('Success', event.id);
-
-//   io.getIO().emit("cryptoChargeEvent", {
-//     userType: "all",
-//     event
-//   });
-
-//   // res.status(200).send('Signed Webhook Received: ' + event.id);
-// });
 
 
 
@@ -126,7 +99,39 @@ app.use((req, res, next) => {
 // });
 app.use(auth);
 
+app.use(rawBody);
+
 webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVapidKey)
+
+
+app.post('/', function (req, res) {
+  var event;
+
+  console.log(req.headers);
+
+  try {
+    event = Webhook.verifyEventBody(
+      req.rawBody,
+      req.headers['x-cc-webhook-signature'],
+      process.env.COIN_BASE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    console.log('Error occured', error.message);
+
+    return res.status(400).send('Webhook Error:' + error.message);
+  }
+
+  console.log('recieved event: ', event)
+
+  console.log('Success', event.id);
+
+  io.getIO().emit("cryptoChargeEvent", {
+    userType: "all",
+    event
+  });
+
+  res.status(200).send('Signed Webhook Received: ' + event.id);
+});
 
 app.post('/subscribe', async (req, res) => {
   const subscription = req.body
