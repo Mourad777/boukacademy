@@ -8,6 +8,7 @@ const Result = require("../../../models/result");
 const Lesson = require("../../../models/lesson");
 const Notification = require("../../../models/notification");
 const Configuration = require("../../../models/configuration");
+const Transaction = require("../../../models/transaction");
 const io = require("../../../socket");
 const {
   validateCourse,
@@ -26,7 +27,8 @@ const { clearHash } = require("../../../util/cache");
 const lodash = require("lodash");
 const { sendEmailsToStudents } = require("../../../util/email-students");
 const { sendEmailToOneUser } = require("../../../util/email-user");
-const { pushNotify } = require("../../../util/pushNotification")
+const { pushNotify } = require("../../../util/pushNotification");
+const { updateResultUrls } = require("../../../util/updateResultUrls");
 //notification.save()
 module.exports = {
   createCourse: async function ({ courseInput }, req) {
@@ -92,6 +94,9 @@ module.exports = {
       courseImage: courseInput.courseImage,
       regularOfficeHours: courseInput.regularOfficeHours,
       irregularOfficeHours: courseInput.irregularOfficeHours,
+      cost: courseInput.cost,
+      couponCode:xss(courseInput.couponCode, noHtmlTags),
+      couponExpiration:xss(courseInput.couponExpiration, noHtmlTags),
     });
     const createdCourse = await course.save();
     instructor.coursesTeaching.push(createdCourse);
@@ -198,6 +203,9 @@ module.exports = {
     course.prerequisites = courseInput.prerequisites;
     course.regularOfficeHours = courseInput.regularOfficeHours;
     course.irregularOfficeHours = courseInput.irregularOfficeHours;
+    course.cost = courseInput.cost;
+    course.couponCode = xss(courseInput.couponCode, noHtmlTags);
+    course.couponExpiration = xss(courseInput.couponExpiration, noHtmlTags);
 
     const updatedCourse = await course.save();
     let courseDropDeadlineNotification;
@@ -263,7 +271,6 @@ module.exports = {
         course: course._id,
       });
       if (isSendPushNotifications) {
-        console.log('-----------------------------------------------------------isSendPushNotifications2',isSendPushNotifications)
         await pushNotify({ ...notificationOptions, content: "officeHoursUpdatedFor", })
       }
       if (isSendEmails) {
@@ -682,6 +689,7 @@ module.exports = {
                 blanks: fixedFillInBlanksQuestions,
               },
               completed: isClosedTestResult ? true : false,
+              
             };
           });
         const fixedLessons = await Promise.all(
@@ -753,12 +761,18 @@ module.exports = {
                 };
               })
             );
+            const fixedTestResults = await  Promise.all((request.student.testResults||[]).map(
+              async (result) => await updateResultUrls(result)
+            ));
+            
+            console.log('fixedTestResults',fixedTestResults)
             return {
               ...request._doc,
               student: {
                 ...request.student._doc,
                 profilePicture: urlProfilePicture,
                 documents,
+                testResults:fixedTestResults,
               },
             };
           })
@@ -828,6 +842,7 @@ module.exports = {
               course._id.toString()
             ),
             numberOfStudents,
+            couponCode:"",
           };
         }
         //case for giving courses to students enrolled
@@ -853,7 +868,7 @@ module.exports = {
           passed: courseResult.passed,
           enrolled: true,
           enrollmentRequested: false,
-
+          couponCode:"",
           completed: (student.completedCourses || []).includes(
             course._id.toString()
           ),
@@ -990,6 +1005,17 @@ module.exports = {
       error.code = 403;
       throw error;
     }
+
+    if(course.cost) {
+      const transaction = await Transaction.findOne({userId:studentId,isSuccess:true,courseId:courseId});
+      console.log('transaction',transaction);
+      if(!transaction){
+        const error = new Error("The course has not been paid for yet");
+        error.code = 403;
+        throw error;
+      }
+    }
+
     const previousRequest = course.studentsEnrollRequests.find(
       (r) => r.student.toString() === student._id.toString()
     );
@@ -1179,6 +1205,17 @@ module.exports = {
       error.code = 401;
       throw error;
     }
+    //check if the course has been paid for
+    if(course.cost) {
+      const transaction = await Transaction.findOne({userId:studentId,isSuccess:true,courseId:courseId});
+      console.log('transaction',transaction);
+      if(!transaction){
+        const error = new Error("The course has not been paid for yet");
+        error.code = 403;
+        throw error;
+      }
+    }
+
     //check to see if student is already enrolled ._id
     if (
       student.coursesEnrolled.includes(
@@ -1617,7 +1654,10 @@ module.exports = {
       (course.courseDropDeadline || "").toString()
     ).getTime();
 
-    if ((isCourseDropped && !course.courseDropDeadline) || (isCourseDropped && course.courseDropDeadline && (courseDropDeadline > Date.now()))) {
+    //should only be able to grade the course if the student has not possibility of re-enrolling
+    //for example if the coursedropdeadline has passed, or if the admin has disabled re-enrollment after
+    //the course is dropped
+    if ((adminSettings.isEnrollAllowedAfterDropCourse && isCourseDropped && !course.courseDropDeadline) || (isCourseDropped && course.courseDropDeadline && (courseDropDeadline > Date.now()))) {
       const error = new Error("Can't grade the course if their is no drop deadline or the deadline has not yet passed");
       error.code = 401;
       throw error;

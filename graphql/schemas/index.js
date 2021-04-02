@@ -12,6 +12,7 @@ const questionType = require('./question')
 const notificationType = require('./notification')
 const authenticationType = require('./authentication')
 const configurationType = require('./configuration')
+const transactionType = require('./transactions')
 
 const types = [
     adminType,
@@ -26,6 +27,7 @@ const types = [
     notificationType,
     authenticationType,
     configurationType,
+    transactionType,
 ]
 
 module.exports = mergeTypes(types, {all:true})

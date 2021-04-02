@@ -11,6 +11,7 @@ const questionResolver = require('./question/question')
 const notificationResolver = require('./notification/notification')
 const authenticationResolver = require('./authentication/authentication')
 const configurationResolver = require('./configuration/configuration')
+const transactionResolver = require('./transactions/transactions')
 
 const resolvers = [
     adminResolver,
@@ -24,7 +25,8 @@ const resolvers = [
     questionResolver,
     notificationResolver,
     authenticationResolver,
-    configurationResolver
+    configurationResolver,
+    transactionResolver,
 ]
 
 module.exports = mergeResolvers(resolvers)

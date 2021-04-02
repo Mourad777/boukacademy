@@ -21,7 +21,6 @@ module.exports = async (req, res, next) => {
 
 
   const token = authHeader.split(' ')[1];
-  console.log('token: ',token)
   let userType, id, errorMessage;
   if (!token || token === "undefined") {
     console.log('no token')
@@ -43,8 +42,6 @@ module.exports = async (req, res, next) => {
 
 
   if (decodedToken) {
-
-    console.log('decoded token', decodedToken)
     if (!decodedToken) {
       req.studentIsAuth = false;
       req.instructorIsAuth = false;

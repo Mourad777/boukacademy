@@ -237,6 +237,9 @@ module.exports = buildSchema(`
         totalIncludedTests: Int
         studentGrades:[StudentGrade!]!
         resources:[Resource]
+        cost:Float
+        couponCode:String
+        couponExpiration:String
     }
 
     type CourseData {
@@ -274,6 +277,9 @@ module.exports = buildSchema(`
         courseImage: String
         regularOfficeHours: [OfficeHourDayInput]
         irregularOfficeHours: [OfficeHourDateInput]
+        cost:Float
+        couponCode:String
+        couponExpiration:String
     }
 
     type RootQuery {

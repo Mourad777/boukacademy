@@ -7,11 +7,10 @@ const app = express();
 // const client = redis.createClient(process.env.REDIS_URL);
 const path = require("path");
 const Instructor = require("./models/instructor");
-const Student = require("./models/student");
 const webpush = require('web-push')
-const publicVapidKey = process.env.PUBLIC_VAPID_KEY
-const privateVapidKey = process.env.PRIVATE_VAPID_KEY
-
+const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
+const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
+const io = require("./socket");
 const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
 
 const Configuration = require('./models/configuration')
@@ -34,6 +33,7 @@ const graphqlSchema = require("./graphql/schemas/index");
 const graphqlResolver = require("./graphql/resolvers/index");
 const graphqlHttp = require("express-graphql");
 const auth = require("./middleware/auth");
+const rawBody = require("./middleware/rawBody");
 const socketAuth = require("./middleware/socketAuth");
 const { buildSchema } = require("graphql");
 const schema = buildSchema(graphqlSchema);
@@ -43,22 +43,27 @@ const { s3, getObjectUrl } = require("./s3");
 require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
-const student = require("./models/student");
 const { bucketCleanup } = require("./util/awsBucketCleanup");
-
+var os = require('os');
 const multerUpload = multer().any();
 
-// app.get('*', function(req, res) {
-//   console.log('redirect to :','https://' + process.env.APP_URL + req.url)
-//   res.redirect('https://' + process.env.APP_URL + req.url);
-// })
+app.get('*', function (req, res) {
+  console.log('redirect to :', 'https://' + process.env.APP_URL + req.url)
+  res.redirect('https://' + process.env.APP_URL + req.url);
+})
 
-app.use(function(req, res, next) {
-  if ((req.get('X-Forwarded-Proto') !== 'https')) {
-    res.redirect('https://' + req.get('Host') + req.url);
-  } else
-    next();
-});
+
+
+// if(os.hostname().indexOf("local") === -1){
+//   //if not local host
+//   app.use(function(req, res, next) {
+//     if ((req.get('X-Forwarded-Proto') !== 'https')) {
+//       res.redirect('https://' + req.get('Host') + req.url);
+//     } else
+//       next();
+//   });
+// }
+
 
 app.use(multerUpload);
 app.use(bodyParser.json());
@@ -76,6 +81,42 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use(rawBody);
+
+
+app.post('/', function (req, res) {
+  var event;
+
+  console.log(req.headers);
+
+  try {
+    event = Webhook.verifyEventBody(
+      req.rawBody,
+      req.headers['x-cc-webhook-signature'],
+      process.env.COIN_BASE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    console.log('Error occured', error.message);
+
+    return res.status(400).send('Webhook Error:' + error.message);
+  }
+
+  console.log('recieved event: ', event)
+
+  console.log('Success', event.id);
+
+  io.getIO().emit("cryptoChargeEvent", {
+    userType: "all",
+    event
+  });
+
+  // res.status(200).send('Signed Webhook Received: ' + event.id);
+});
+
+
+
+
 // //fixes mime type service worker issue in firefox and edge
 // app.get("/custom-service-worker.js", (req, res) => {
 //   res.sendFile(path.resolve(__dirname, "public", "custom-service-worker.js"));
@@ -115,7 +156,7 @@ app.put("/upload", async (req, res, next) => {
   const key = req.body.key;
   const fileType = req.body.fileType;
   const fileExtension =
-    (key.substring(key.lastIndexOf(".") + 1, key.length) || key||"").toLowerCase();
+    (key.substring(key.lastIndexOf(".") + 1, key.length) || key || "").toLowerCase();
 
   const acceptedExtensions = [
     "jpeg",
@@ -274,6 +315,8 @@ mongoose
     console.log("connected to mongoose");
 
     const expressServer = app.listen(port);
+
+
     const io = require("./socket").init(expressServer);
 
     io.use(socketAuth);

@@ -210,6 +210,18 @@ const courseSchema = new Schema(
         // },
       },
     ],
+    cost:{
+      type:Number,
+      required:false,
+    },
+    couponCode: {
+      type: String,
+      required: false,
+    },
+    couponExpiration: {
+      type: Date,
+      required: false,
+    },
   },
   {
     timestamps: true,

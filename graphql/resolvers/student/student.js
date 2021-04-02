@@ -373,7 +373,7 @@ module.exports = {
         };
       })
     );
-    console.log('check 4')
+
     const testStartTime = Date.now();
     const testEndTime = Date.now() + test.timer * 1000 * 60;
     const testCloseDate = new Date((test.dueDate || "").toString()).getTime();
@@ -434,7 +434,7 @@ module.exports = {
       }
       //if the due date is sooner than Date.now() + timer use the due date
       await student.save();
-      console.log('check 5')
+
       io.getIO().emit("updateStudents", {
         userType: "instructor",
         // courseId: test.course,
@@ -457,7 +457,7 @@ module.exports = {
       student.assignmentsInSession.push(assignmentInSession);
       await student.save();
     }
-    console.log('check 6')
+ 
     //notify the instructor in real-time that the test has started
     const fixedTest = await updateTestUrls(test);
     //giving the student a test with hidden answers
@@ -1282,6 +1282,7 @@ module.exports = {
               };
             })
           );
+          
           return {
             ...student._doc,
             _id: student._id.toString(),

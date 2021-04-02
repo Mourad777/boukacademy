@@ -51,6 +51,9 @@ module.exports = buildSchema(`
         irregularOfficeHours: [OfficeHourDate]
         createdAt: String
         resources:[Resource]
+        cost:Float
+        couponCode:String
+        couponExpiration:String
     }
 
     type Slide {
