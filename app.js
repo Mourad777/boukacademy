@@ -33,7 +33,7 @@ const graphqlSchema = require("./graphql/schemas/index");
 const graphqlResolver = require("./graphql/resolvers/index");
 const graphqlHttp = require("express-graphql");
 const auth = require("./middleware/auth");
-const rawBody = require("./middleware/rawBody");
+// const rawBody = require("./middleware/rawBody");
 const socketAuth = require("./middleware/socketAuth");
 const { buildSchema } = require("graphql");
 const schema = buildSchema(graphqlSchema);
@@ -75,7 +75,7 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "OPTIONS, GET, POST, PUT, PATCH, DELETE"
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-cc-webhook-signature");
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
@@ -99,18 +99,44 @@ app.use((req, res, next) => {
 // });
 app.use(auth);
 
-app.use(rawBody);
+// app.use(rawBody);
 
 webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVapidKey)
 
+function rawBody(req, res, next) {
+	req.setEncoding('utf8');
+
+	var data = '';
+
+	req.on('data', function (chunk) {
+		data += chunk;
+	});
+
+	req.on('end', function () {
+		req.rawBody = data;
+
+		next();
+	});
+}
 
 app.post('/', function (req, res) {
   var event;
 
   console.log(req.headers);
-
+  // let data = '';
   try {
+    
+    // req.on('data', function (chunk) {
+    //     data += chunk;
+    // });
+
+    // req.on('end', function () {
+    //     req.rawBody = data;
+    // });
+
+
     event = Webhook.verifyEventBody(
+      // data,
       req.rawBody,
       req.headers['x-cc-webhook-signature'],
       process.env.COIN_BASE_WEBHOOK_SECRET
@@ -291,7 +317,7 @@ app.use((req, res, next) => {
   res.sendFile(path.resolve(__dirname, "public", "index.html"));
 });
 
-mongoose.disconnect
+app.use(rawBody);
 
 mongoose
   .connect(
