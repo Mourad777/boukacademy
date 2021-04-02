@@ -47,22 +47,22 @@ const { bucketCleanup } = require("./util/awsBucketCleanup");
 var os = require('os');
 const multerUpload = multer().any();
 
-app.get('*', function (req, res) {
-  console.log('redirect to :', 'https://' + process.env.APP_URL + req.url)
-  res.redirect('https://' + process.env.APP_URL + req.url);
-})
+// app.get('*', function (req, res) {
+//   console.log('redirect to :', 'https://' + process.env.APP_URL + req.url)
+//   res.redirect('https://' + process.env.APP_URL + req.url);
+// })
 
 
 
-// if(os.hostname().indexOf("local") === -1){
-//   //if not local host
-//   app.use(function(req, res, next) {
-//     if ((req.get('X-Forwarded-Proto') !== 'https')) {
-//       res.redirect('https://' + req.get('Host') + req.url);
-//     } else
-//       next();
-//   });
-// }
+if(os.hostname().indexOf("local") === -1){
+  //if not local host
+  app.use(function(req, res, next) {
+    if ((req.get('X-Forwarded-Proto') !== 'https')) {
+      res.redirect('https://' + req.get('Host') + req.url);
+    } else
+      next();
+  });
+}
 
 
 app.use(multerUpload);
