@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
     req.instructorIsAuth = false;
     console.log('next')
     next();
-    
+    return
   }
 
 
