@@ -13,7 +13,7 @@ const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
 const io = require("./socket");
 const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
 
-const Configuration = require('./models/configuration')
+const Webhook = require('coinbase-commerce-node').Webhook;
 
 const {
   onNotifyOfDocUpdate,
