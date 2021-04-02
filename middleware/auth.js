@@ -37,7 +37,9 @@ module.exports = async (req, res, next) => {
 
   let decodedToken;
   try {
-    decodedToken = jwt.verify(token, process.env.SECRET);
+    if (token) {
+      decodedToken = jwt.verify(token, process.env.SECRET);
+    }
   } catch (err) {
     // console.log('err', err)
     // return res.status(403).send(error);
