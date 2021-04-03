@@ -43,6 +43,10 @@ const transactionSchema = new Schema(
             type: String,
             required: false,
         },
+        expiration: {
+            type: Date,
+            required: false,
+        },
         error: {
             type: String,
             required: false,

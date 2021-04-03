@@ -107,6 +107,7 @@ module.exports = {
             status: 'pending',
             coinbaseChargeId:charge.id,
             address:bitcoinAddress,
+            expiration:charge.expires_at,
         });
         await newTransaction.save()
         console.log('bitcoinAddress: ', bitcoinAddress);

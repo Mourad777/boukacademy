@@ -33,6 +33,7 @@ module.exports = buildSchema(`
         destinationAddress:String
         error:String
         address:String
+        expiration: String
     }
 
     type RootQuery {
