@@ -113,7 +113,8 @@ app.post('/', function (req, res) {
 
   io.getIO().emit("cryptoChargeEvent", {
     userType: "all",
-    event
+    event,
+    body:req.body,
   });
 
   res.status(200).send('Signed Webhook Received: ' + event.id);
