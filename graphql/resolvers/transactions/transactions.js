@@ -237,7 +237,7 @@ module.exports = {
             throw error;
         }
 
-        const transactions = await Transaction.find({ userId: req.userId, isSuccess: true });
+        const transactions = await Transaction.find({ userId: req.userId});
 
         return transactions;
 

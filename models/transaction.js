@@ -39,7 +39,7 @@ const transactionSchema = new Schema(
             type: String,
             required: false,
         },
-        destinationAddress: {
+        address: {
             type: String,
             required: false,
         },
