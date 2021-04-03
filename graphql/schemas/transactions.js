@@ -30,7 +30,9 @@ module.exports = buildSchema(`
         isSuccess:Boolean!
         status:String
         coinbaseChargeId:String
+        destinationAddress:String
         error:String
+        address:String
     }
 
     type RootQuery {

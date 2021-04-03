@@ -111,10 +111,53 @@ app.post('/', function (req, res) {
 
   console.log('Success', event.id);
 
+  const userId = event.data.metadata.customer_id;
+  const courseId = event.data.metadata.courseId;
+  const amount = event.data.pricing.bitcoin.amount
+  let status, isSuccess;
+  if(event.type === 'charge:created'){
+    status = 'initiated'
+    return;
+  }
+  if(event.type === 'charge:pending'){
+    status = 'pending';
+    isSuccess = false;
+
+  }
+  if(event.type === 'charge:confirmed'){
+    status = 'paid'
+    isSuccess = true;
+  }
+
+  const previousSuccessfulTransaction = await Transaction.find({courseId,userId,isSuccess:true});
+
+  if(previousSuccessfulTransaction){
+    const error = new Error("The course has already been paid for");
+    error.code = 403;
+    throw error;
+  }
+
+  const newTransaction = new Transaction({
+    userId,
+    paymentType: 'cryptocurrency',
+    amount,
+    currency: "bitcoin",
+    courseId,
+    isRefund: false,
+    status,
+    isSuccess,
+    address:event.data.addresses.bitcoin,
+  })
+
+  newTransaction.save();
+
+
+  console.log('userId',userId);
+
+
   io.getIO().emit("cryptoChargeEvent", {
-    userType: "all",
+    userId,
     event,
-    body:req.body,
   });
 
   res.status(200).send('Signed Webhook Received: ' + event.id);

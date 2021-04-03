@@ -104,6 +104,7 @@ module.exports = {
             isRefund: false,
             status: 'pending',
             coinbaseChargeId:charge.id,
+            address:bitcoinAddress,
         });
         console.log('bitcoinAddress: ', bitcoinAddress);
         const expiration = new Date(charge.expires_at).getTime();
