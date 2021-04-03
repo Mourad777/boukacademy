@@ -17,7 +17,7 @@ clientObj.setRequestTimeout(3000);
 const Charge = coinbase.resources.Charge;
 
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
 
