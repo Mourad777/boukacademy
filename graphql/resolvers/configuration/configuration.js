@@ -314,7 +314,6 @@ module.exports = {
 
     let newTokenData;
     if (isStayLoggedInChanged) {
-      console.log('change in stay logged in')
       const expirationTime = config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_EXPIRATION_TIME;
       const refreshTokenExpiration = Date.now() + parseInt(config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_REFRESH_TIME_LIMIT) * 1000;
       const token = createToken(userType, user._id, user.email, expirationTime);

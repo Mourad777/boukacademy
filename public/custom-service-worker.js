@@ -1,11 +1,7 @@
-console.log('service worker loaded')
 
 self.addEventListener('push', e => {
     const data = e.data.json();
-    console.log('data.url', data.url)
-    console.log('push recieved', data);
-    console.log('data.icon', data.icon)
-    console.log('click action222', data.url)
+
     const isIM = data.isIM
     self.registration.showNotification(data.title, {
         body: data.body,

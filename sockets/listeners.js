@@ -325,7 +325,7 @@ const onMessage = (socket) => {
           }
           await pushNotify(notificationOptions)
         } catch(e){
-          console.log('eee',e)
+          console.log('e',e)
         }
 
         //check if user is in chat room before pushing message

@@ -22,10 +22,6 @@ const sendEmailToOneUser = async ({
   buttonText,
   buttonUrl,
 }) => {
-  console.log('test.testName', test.testName)
-  console.log('content', content)
-  console.log('date', date)
-  console.log('subject', subject)
 
   if (!content) return
   const User = require(`../models/${userTypeReciever}`);
@@ -56,8 +52,6 @@ const sendEmailToOneUser = async ({
     if (passed === false) {
       passOrFail = i18n.__("failed")
     }
-    console.log('content', content)
-    console.log('firstName', firstName, 'lastname', lastName)
 
     primaryText = i18n.__(
       content,

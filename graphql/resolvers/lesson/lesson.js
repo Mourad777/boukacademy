@@ -20,7 +20,6 @@ const { pushNotify } = require("../../../util/pushNotification");
 
 module.exports = {
   createLesson: async function ({ lessonInput }, req) {
-    console.log('calling create lesson')
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;

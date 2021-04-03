@@ -35,7 +35,6 @@ module.exports = {
     },
     req
   ) {
-    console.log('testInput',testInput)
     if (!req.instructorIsAuth) {
       const error = new Error("Not authenticated!");
       error.code = 401;
@@ -818,7 +817,6 @@ module.exports = {
 
     //CHECK TO SEE IF THE FILES ARENT BEING USED IN THE QUESTION MODEL
     const otherTests = tests.filter(t => t._id.toString() !== id.toString());
-    console.log('other tests: ', otherTests)
     const filesToNotDelete = [...getQuestionsUrls(questions), ...getTestUrls(otherTests)];
 
     const filesToDeleteFiltered = filesToDelete

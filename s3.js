@@ -33,7 +33,6 @@ const listAllObjects = async () => {
     });
   });
 
-  console.log('returning: ', objectKeys)
   return objectKeys;
 }
 

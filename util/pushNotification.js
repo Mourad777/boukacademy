@@ -58,7 +58,6 @@ const pushNotify = async ({
 
     }))
   } else {
-    console.log('push content:', content)
     const firstName = (student || {}).firstName || (instructor || {}).firstName;
     const lastName = (student || {}).lastName || (instructor || {}).lastName;
     let user;
@@ -103,7 +102,6 @@ const pushNotify = async ({
           
         }) : content || '';
       const plainUserObject = user.toObject()
-      console.log('plainUserObject', plainUserObject)
       let payload = JSON.stringify({ title: notificationTitle, url: process.env.APP_URL + url });
       if (isIM) {
         payload = JSON.stringify({

@@ -152,7 +152,6 @@ module.exports = {
 
     const isSendEmails = instructorConfig.isSendCourseEmails;
     const isSendPushNotifications = instructorConfig.isSendCoursePushNotifications;
-    console.log('instructorConfig',instructorConfig)
     const prevRegOfficeHours = course.regularOfficeHours.map((o) => {
       return { day: o.day, startTime: o.startTime, endTime: o.endTime };
     });
@@ -238,7 +237,6 @@ module.exports = {
       });
       //push notifications
       if (isSendPushNotifications) {
-        console.log('-----------------------------------------------------------isSendPushNotifications1',isSendPushNotifications)
         await pushNotify({ ...notificationOptions, content: isDropCoursePenalty ? "courseDropDeadline" : "courseDropDeadlineChanged", })
       }
       if (isSendEmails) {
@@ -765,7 +763,6 @@ module.exports = {
               async (result) => await updateResultUrls(result)
             ));
             
-            console.log('fixedTestResults',fixedTestResults)
             return {
               ...request._doc,
               student: {
@@ -988,7 +985,6 @@ module.exports = {
   },
 
   enrollRequest: async function ({ studentId, courseId }, req) {
-    console.log('requesting to enroll -----------------------------------------------------------')
 
     const student = await Student.findById(studentId);
     const course = await Course.findById(courseId);
@@ -1010,7 +1006,6 @@ module.exports = {
 
     if(course.cost) {
       const transaction = await Transaction.findOne({userId:studentId,isSuccess:true,courseId:courseId});
-      console.log('transaction',transaction);
       if(!transaction){
         const error = new Error("The course has not been paid for yet");
         error.code = 403;
@@ -1170,7 +1165,6 @@ module.exports = {
   },
 
   enrollApprove: async function ({ studentId, courseId }, req) {
-    console.log('approving enroll request -----------------------------------------------------------')
     const student = await Student.findById(studentId);
     const instructor = await Instructor.findById(req.userId);
     const course = await Course.findById(courseId);
@@ -1211,7 +1205,6 @@ module.exports = {
     //check if the course has been paid for
     if(course.cost) {
       const transaction = await Transaction.findOne({userId:studentId,isSuccess:true,courseId:courseId});
-      console.log('transaction',transaction);
       if(!transaction){
         const error = new Error("The course has not been paid for yet");
         error.code = 403;

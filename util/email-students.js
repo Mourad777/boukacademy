@@ -67,7 +67,6 @@ const getEmailContent = (
   grade,
   language
 ) => {
-  console.log('getting email content, test:', test)
   const emailContent = i18n.__(content, {
     courseName: course.courseName,
     lessonName: lesson.lessonName,
@@ -100,7 +99,6 @@ const sendEmailsToStudents = async ({
   buttonText,
   buttonUrl,
 }) => {
-  console.log('studentIdsEnrolled', studentIdsEnrolled)
   await Promise.all(
     studentIdsEnrolled.map(async (st) => {
       const studentConfig = await Configuration.findOne({ user: st });
@@ -190,8 +188,6 @@ const sendEmailsToStudents = async ({
         if (buttonUrl) {
           url = process.env.APP_URL + buttonUrl
         }
-        console.log('primaryText', primaryText)
-        console.log('secondaryText', secondaryText)
         const html = emailTemplate(primaryText, secondaryText, tertiaryText, translatedButtonText, url);
     
           transporter.sendMail({

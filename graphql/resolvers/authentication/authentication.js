@@ -20,10 +20,7 @@ const bson = require('bson');
 //SESSION_REFRESH_TIME_LIMIT is for the automatic logout of the session regardless of inactivity
 module.exports = {
   userLogin: async function ({ email, password, userType, notificationSubscription }, req) {
-    console.log('notificationSubscription',notificationSubscription)
     //check if user has account userId
-    console.log('check -1')
-    console.log('req.isGoogleAuth',req.isGoogleAuth)
     const user = await require(`../../../models/${userType}`).findOne({
       email: email.toLowerCase().trim(),
     });
@@ -54,7 +51,6 @@ module.exports = {
       }
 
       const userId = new bson.ObjectId().toHexString();
-      console.log('userId 1', userId)
 
       let configuration;
       if (shouldCreateAdmin) {
@@ -108,8 +104,6 @@ module.exports = {
 
       if (!shouldCreateAdmin) {
 
-        console.log('creating reg instructor')
-
         i18n.setLocale(admin.language);
         //send e-mail notifying admin
         let emailCondition, pushCondition, notificationContent;
@@ -137,7 +131,7 @@ module.exports = {
         //   subject: i18n.__("verifyAccountEmailSubject"),
         //   html: emailTemplate(subject, primaryText, null, buttonText, buttonUrl),
         // });
-        console.log('check 1')
+
         const notificationOptions = {
           multipleUsers: false,
           userId: admin._id,
@@ -150,9 +144,6 @@ module.exports = {
         }
 
         await pushNotify(notificationOptions);
-
-
-        console.log('check 2')
 
         await sendEmailToOneUser({
           userId: foundAdmin._id,
@@ -168,8 +159,6 @@ module.exports = {
           buttonText: 'userDetails',
           buttonUrl: `users/${userType}s/${createdUser._id}`,
         });
-
-        console.log('check 3')
 
         const notification = new Notification({
           toUserType: "instructor",
@@ -203,12 +192,6 @@ module.exports = {
         // admin:user.admin,
       };
     }
-
-    console.log('not creating account')
-
-
-
-
 
     if (!user) {
       const error = new Error(`${userType}NoAccount`);
@@ -250,9 +233,7 @@ module.exports = {
     });
     const expirationTime = config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_EXPIRATION_TIME
     const token = createToken(userType, user._id, email, expirationTime);
-    console.log('process.env.LONG_SESSION_REFRESH_TIME_LIMIT', process.env.LONG_SESSION_REFRESH_TIME_LIMIT)
-    console.log('process.env.SESSION_EXPIRATION_TIME', process.env.SESSION_EXPIRATION_TIME)
-    console.log('config.isStayLoggedIn', config.isStayLoggedIn, Date.now() + parseInt(config.isStayLoggedIn ? process.env.LONG_SESSION_REFRESH_TIME_LIMIT : process.env.SESSION_REFRESH_TIME_LIMIT) * 1000)
+   
     return {
       ...user._doc,
       token: token,
@@ -372,15 +353,11 @@ module.exports = {
       notificationSubscription: accountInput.notificationSubscription,
     });
     i18n.setLocale(accountInput.language);
-    console.log('accountInput.language', accountInput.language)
     //send e-mail to new user to verify account
     const primaryText = i18n.__("verifyAccountEmail")
-    console.log('primaryText', primaryText)
     const buttonUrl = `${process.env.APP_URL}verify-account/${accountInput.accountType}/${token}`
     const buttonText = i18n.__("confirm");
     const subject = i18n.__("verifyAccountEmailSubject")
-    console.log('subject', i18n.__("verifyAccountEmailSubject"))
-    console.log('buttonText', buttonText)
     transporter.sendMail({
       from: "boukacademy@learn.com",
       to: accountInput.email,
@@ -510,7 +487,6 @@ module.exports = {
 
   verifyAccount: async function ({ token, password }) {
     const decodedToken = jwt.verify(token, process.env.VERIFICATION_SECRET);
-    console.log('decodedToken in account verify', decodedToken)
     let accountType;
     if (decodedToken.studentId) {
       accountType = 'student'

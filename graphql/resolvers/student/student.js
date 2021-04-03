@@ -87,7 +87,6 @@ module.exports = {
     //starting a test or assignment
     //continuing test or assignment
     //fetching test to be reviewed
-    console.log('fetching test..........................................')
     if (!req.studentIsAuth && !req.instructorIsAuth) {
       const error = new Error("Neither student nor instructor authenticated");
       error.code = 401;
@@ -147,7 +146,6 @@ module.exports = {
     }
 
     //CASE FOR STUDENT FETCHING TEST TO START IT OR REVIEW IT AFTER ITS BEEN GRADED
-    console.log('check 1')
     if (!student.coursesEnrolled.includes(test.course.toString())) {
       const error = new Error(
         "Student not authorized. Not enrolled in the course!"
@@ -216,7 +214,6 @@ module.exports = {
     //close test
     //this happens when student logsout before the timer expires or before the due date is reached
     //and does not log back in before that time to let the test submit
-    console.log('check 2')
     const isPastDue =
       new Date((student.testInSession || {}).endTime).getTime() + 15000 <
       Date.now(); //give extra 15 seconds for slow networks
@@ -272,7 +269,6 @@ module.exports = {
         throw error;
       }
     }
-    console.log('check 3')
     const startDate = new Date(
       (test.availableOnDate || "").toString()
     ).getTime();

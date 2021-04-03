@@ -77,7 +77,6 @@ function rawBody(req, res, next) {
 	var data = '';
 
 	req.on('data', function (chunk) {
-    console.log('chunk')
 		data += chunk;
 	});
 
@@ -90,13 +89,10 @@ function rawBody(req, res, next) {
 
 app.post('/',async function (req, res) {
   var event;
-  console.log('*****************************************************************************************************************************')
-  console.log('req.headers',req.headers);
 
   try {
 
     console.log('verifying webhook...');
-    console.log('req.body',req.body);
     event = Webhook.verifyEventBody(
       // data,
       // req.rawBody,
@@ -112,7 +108,6 @@ app.post('/',async function (req, res) {
 
   console.log('recieved event: ', event)
 
-  console.log('Success', event.id);
 
   const userId = event.data.metadata.customer_id;
   const courseId = event.data.metadata.courseId;
@@ -126,13 +121,13 @@ app.post('/',async function (req, res) {
     status = 'pending';
     isSuccess = false;
   }
-  if(event.type === 'charge:confirmed' || event.type === 'charge:delayed'){
+  if(event.type === 'charge:confirmed' || event.type === 'charge:delayed' || event.type === 'charge:resolved'){
     status = 'paid'
     isSuccess = true;
   }
 
-  const previousSuccessfulTransaction = await Transaction.find({courseId,userId,isSuccess:true});
-
+  const previousSuccessfulTransaction = await Transaction.findOne({courseId,userId,status:'paid'});
+  console.log('previousSuccessfulTransaction',previousSuccessfulTransaction);
   if(previousSuccessfulTransaction){
     const error = new Error("The course has already been paid for");
     error.code = 403;
@@ -153,9 +148,6 @@ app.post('/',async function (req, res) {
   })
 
   newTransaction.save();
-
-
-  console.log('userId',userId);
 
   if(status === 'paid') {
     //submit enroll request or auto enroll depending on admin config
@@ -223,9 +215,6 @@ webpush.setVapidDetails('mailto:mourad777b@gmail.com', publicVapidKey, privateVa
 
 app.post('/subscribe', async (req, res) => {
   const subscription = req.body
-  console.log('push recieved')
-  // console.log('subscription', subscription)
-  // console.log('req.userId', req.userId)
   let userType;
   if (req.instructorIsAuth) {
     userType = 'instructor'
@@ -242,7 +231,6 @@ app.post('/subscribe', async (req, res) => {
 })
 
 app.put("/upload", async (req, res, next) => {
-  console.log('!req.instructorIsAuth && !req.studentIsAuth', !req.instructorIsAuth && !req.studentIsAuth)
   if (!req.instructorIsAuth && !req.studentIsAuth) {
     return res.status(401).json({ message: "Not authenticated!" });
   }
@@ -412,7 +400,6 @@ mongoose
 
     io.use(socketAuth);
     io.on("connection", function (socket) {
-      // console.log("New client connected");
       onNotifyOfDocUpdate(socket);
       onLoggedIn(socket); //fired when user logs in
       onActive(socket); //fired when user activity

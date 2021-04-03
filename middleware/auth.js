@@ -6,25 +6,14 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 module.exports = async (req, res, next) => {
   const authHeader = req.get('Authorization');
-  console.log('authHeader', authHeader)
   if (!authHeader) {
     console.log('noheader')
     req.studentIsAuth = false;
     req.instructorIsAuth = false;
-    console.log('next')
     next();
-
   }
 
-
-
-
-
-
-  if (authHeader) {
-
-
-
+if (authHeader) {
 
     const token = authHeader.split(' ')[1];
     let userType, id, errorMessage;
@@ -43,9 +32,7 @@ module.exports = async (req, res, next) => {
     } catch (err) {
       // console.log('err', err)
       // return res.status(403).send(error);
-
     }
-
 
     if (decodedToken) {
       if (!decodedToken) {
@@ -116,16 +103,12 @@ module.exports = async (req, res, next) => {
         }
         return res.status(403).send(error);
       }
-      console.log('next')
       next();
 
     } else {
 
       let ticket;
-      console.log('process.env.GOOGLE_CLIENT_ID', process.env.GOOGLE_CLIENT_ID);
-      console.log('token', token)
       try {
-        console.log('trying to get ticket')
         ticket = await client.verifyIdToken({
           idToken: token,
           audience: process.env.GOOGLE_CLIENT_ID,
@@ -139,22 +122,14 @@ module.exports = async (req, res, next) => {
           const payload = ticket.getPayload()
           req.googleUser = payload
           req.isGoogleAuth = true
-          console.log('payload: ', payload)
-          console.log('next')
           next();
 
         } catch (e) {
           console.log('e', e)
         }
       }
-      // else {
-      //   return next()
-      // }
-      console.log('isticket', !!ticket)
-      console.log('no token nor ticket')
-      // console.log('next')
-      // next();
 
+      console.log('no token nor ticket')
 
     }
   }

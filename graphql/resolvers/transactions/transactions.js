@@ -10,7 +10,6 @@ const Transaction = require("../../../models/transaction");
 const coinbase = require('coinbase-commerce-node');
 const Client = coinbase.Client;
 
-console.log('process.env.COINBASE_KEY', process.env.COINBASE_KEY)
 const clientObj = Client.init(process.env.COINBASE_KEY);
 clientObj.setRequestTimeout(3000);
 
@@ -23,7 +22,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 module.exports = {
     cryptoCharges: async function ({ courseId }, req) {
-        console.log('getting crypto charges')
         if (!req.instructorIsAuth && !req.studentIsAuth) {
             const error = new Error("Not authenticated!");
             error.code = 403;
@@ -32,7 +30,6 @@ module.exports = {
 
         const charges = await Charge.all({});
 
-        console.log('charges: ', charges);
         const fixedCharges = charges.map(ch => {
             if (req.userId !== ch.metadata.customer_id) return null;
             return {
@@ -44,13 +41,11 @@ module.exports = {
                 expiration: new Date(ch.expires_at).getTime()
             }
         });
-        console.log('fixed charges: ', fixedCharges.filter(item => item));
         return fixedCharges.filter(item => item);
 
     },
 
     requestBitcoinAddress: async function ({ courseId }, req) {
-        console.log('check 1')
         if (!req.instructorIsAuth && !req.studentIsAuth) {
             const error = new Error("Not authenticated!");
             error.code = 403;
@@ -93,7 +88,6 @@ module.exports = {
 
         }
         const charge = await Charge.create(chargeData);
-        console.log('charge: ', charge)
         const bitcoinAddress = charge.addresses.bitcoin;
 
         await Transaction.findOneAndDelete({
@@ -117,9 +111,7 @@ module.exports = {
         });
 
         await newTransaction.save()
-        console.log('bitcoinAddress: ', bitcoinAddress);
         const expiration = new Date(charge.expires_at).getTime();
-        console.log('expiration', expiration)
         return {
             currency: 'bitcoin',
             amount: charge.pricing.bitcoin.amount,
@@ -130,9 +122,6 @@ module.exports = {
     },
 
     intentCreditcardPayment: async function ({ courseId, paymentMethodId, paymentIntentId }, req) {
-        console.log('credit card payment courseId', courseId)
-        console.log('credit card payment paymentMethodId', paymentMethodId)
-        console.log('credit card payment paymentIntentId', paymentIntentId)
         if (!req.instructorIsAuth && !req.studentIsAuth) {
             const error = new Error("Not authenticated!");
             error.code = 403;
@@ -146,7 +135,6 @@ module.exports = {
             error.code = 403;
             throw error;
         }
-        console.log('course.cost', course.cost)
 
         // let secret;
         // try {
@@ -155,9 +143,7 @@ module.exports = {
         //         currency: "usd",
         //     })
         //     secret = paymentIntent.client_secret
-        //     console.log('client_secret', paymentIntent.client_secret)
         // } catch (e) {
-        //     console.log('intent error', e)
         // }
 
         // return secret
@@ -214,7 +200,6 @@ module.exports = {
                 intent = await stripe.paymentIntents.confirm(paymentIntentId);
             }
             // Send the response to the client
-            console.log('generateResponse(intent.error)', generateResponse(intent))
 
             if (intent.status === 'succeeded') {
                 newTransaction.isSuccess = true;
