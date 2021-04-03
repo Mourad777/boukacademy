@@ -11,6 +11,7 @@ const webpush = require('web-push')
 const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
 const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
 const io = require("./socket");
+const Transaction = require('./models/transaction')
 const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
 
 const Webhook = require('coinbase-commerce-node').Webhook;
@@ -85,7 +86,7 @@ function rawBody(req, res, next) {
 	});
 }
 
-app.post('/', function (req, res) {
+app.post('/',async function (req, res) {
   var event;
   console.log('*****************************************************************************************************************************')
   console.log('req.headers',req.headers);
