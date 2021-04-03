@@ -34,6 +34,7 @@ module.exports = {
 
         console.log('charges: ', charges);
         const fixedCharges = charges.map(ch=>{
+            if(req.userId !== ch.metadata.customer_id)return null;
             return {
                 address:ch.addresses.bitcoin,
                 currency:'bitcoin',
@@ -42,8 +43,9 @@ module.exports = {
                 courseId:ch.metadata.courseId,
                 expiration:new Date(ch.expires_at).getTime()
             }
-        })
-        return fixedCharges;
+        });
+        console.log('fixed charges: ',fixedCharges.filter(item=>item);)
+        return fixedCharges.filter(item=>item);
 
     },
 
@@ -106,6 +108,7 @@ module.exports = {
             coinbaseChargeId:charge.id,
             address:bitcoinAddress,
         });
+        await newTransaction.save()
         console.log('bitcoinAddress: ', bitcoinAddress);
         const expiration = new Date(charge.expires_at).getTime();
         console.log('expiration',expiration)
