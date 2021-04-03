@@ -46,6 +46,7 @@ require("./util/compareArrays");
 const mongoose = require("mongoose");
 const { bucketCleanup } = require("./util/awsBucketCleanup");
 var os = require('os');
+const { enrollApprove, enrollRequest } = require("./graphql/resolvers/course/course");
 const multerUpload = multer().any();
 
 // app.get('*', function (req, res) {
@@ -123,9 +124,8 @@ app.post('/',async function (req, res) {
   if(event.type === 'charge:pending'){
     status = 'pending';
     isSuccess = false;
-
   }
-  if(event.type === 'charge:confirmed'){
+  if(event.type === 'charge:confirmed' || event.type === 'charge:delayed'){
     status = 'paid'
     isSuccess = true;
   }
@@ -155,6 +155,24 @@ app.post('/',async function (req, res) {
 
 
   console.log('userId',userId);
+
+  if(status === 'paid') {
+    //submit enroll request or auto enroll depending on admin config
+
+    const admin = await Instructor.findOne({ admin: true }).populate(
+      "configuration"
+    );
+    const adminSettings = admin._doc.configuration;
+    const isApproveEnrollments = adminSettings.isApproveEnrollments;
+
+      if(isApproveEnrollments) {
+        enrollRequest({courseId,studentId:userId},{userId})
+      } else {
+        enrollApprove({courseId,studentId:userId},{userId})
+      }
+
+  
+  }
 
 
   io.getIO().emit("cryptoChargeEvent", {

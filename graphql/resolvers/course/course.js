@@ -988,6 +988,8 @@ module.exports = {
   },
 
   enrollRequest: async function ({ studentId, courseId }, req) {
+    console.log('requesting to enroll -----------------------------------------------------------')
+
     const student = await Student.findById(studentId);
     const course = await Course.findById(courseId);
     if (!student) {
@@ -1168,6 +1170,7 @@ module.exports = {
   },
 
   enrollApprove: async function ({ studentId, courseId }, req) {
+    console.log('approving enroll request -----------------------------------------------------------')
     const student = await Student.findById(studentId);
     const instructor = await Instructor.findById(req.userId);
     const course = await Course.findById(courseId);
