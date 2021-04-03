@@ -97,8 +97,8 @@ app.post('/', function (req, res) {
     const jsonData = JSON.stringify(req.body)
     event = Webhook.verifyEventBody(
       // data,
-      // req.rawBody,
-      jsonData,
+      req.rawBody,
+      // jsonData,
       // req.body,
       req.headers['x-cc-webhook-signature'],
       process.env.COIN_BASE_WEBHOOK_SECRET
