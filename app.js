@@ -54,15 +54,15 @@ const multerUpload = multer().any();
 
 
 
-if(os.hostname().indexOf("local") === -1){
-  //if not local host
-  app.use(function(req, res, next) {
-    if ((req.get('X-Forwarded-Proto') !== 'https')) {
-      res.redirect('https://' + req.get('Host') + req.url);
-    } else
-      next();
-  });
-}
+// if(os.hostname().indexOf("local") === -1){
+//   //if not local host
+//   app.use(function(req, res, next) {
+//     if ((req.get('X-Forwarded-Proto') !== 'https')) {
+//       res.redirect('https://' + req.get('Host') + req.url);
+//     } else
+//       next();
+//   });
+// }
 
 
 app.use(multerUpload);
@@ -94,12 +94,10 @@ app.post('/', function (req, res) {
 
     console.log('verifying webhook...');
     console.log('req.body',req.body);
-    const jsonData = JSON.stringify(req.body)
     event = Webhook.verifyEventBody(
       // data,
-      req.rawBody,
-      // jsonData,
-      // req.body,
+      // req.rawBody,
+      JSON.stringify(req.body),
       req.headers['x-cc-webhook-signature'],
       process.env.COIN_BASE_WEBHOOK_SECRET
     );
@@ -121,7 +119,7 @@ app.post('/', function (req, res) {
   res.status(200).send('Signed Webhook Received: ' + event.id);
 });
 
-app.use(rawBody);
+// app.use(rawBody);
 
 
 app.use((req, res, next) => {
