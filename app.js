@@ -148,6 +148,7 @@ app.post('/',async function (req, res) {
     status,
     isSuccess,
     address:event.data.addresses.bitcoin,
+    expiration:event.data.expires_at,
   })
 
   newTransaction.save();
