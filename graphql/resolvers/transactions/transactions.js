@@ -44,7 +44,7 @@ module.exports = {
                 expiration:new Date(ch.expires_at).getTime()
             }
         });
-        console.log('fixed charges: ',fixedCharges.filter(item=>item);)
+        console.log('fixed charges: ',fixedCharges.filter(item=>item));
         return fixedCharges.filter(item=>item);
 
     },
