@@ -33,19 +33,19 @@ module.exports = {
         const charges = await Charge.all({});
 
         console.log('charges: ', charges);
-        const fixedCharges = charges.map(ch=>{
-            if(req.userId !== ch.metadata.customer_id)return null;
+        const fixedCharges = charges.map(ch => {
+            if (req.userId !== ch.metadata.customer_id) return null;
             return {
-                address:ch.addresses.bitcoin,
-                currency:'bitcoin',
-                amount:ch.pricing.bitcoin.amount,
-                userId:ch.metadata.customer_id,
-                courseId:ch.metadata.courseId,
-                expiration:new Date(ch.expires_at).getTime()
+                address: ch.addresses.bitcoin,
+                currency: 'bitcoin',
+                amount: ch.pricing.bitcoin.amount,
+                userId: ch.metadata.customer_id,
+                courseId: ch.metadata.courseId,
+                expiration: new Date(ch.expires_at).getTime()
             }
         });
-        console.log('fixed charges: ',fixedCharges.filter(item=>item));
-        return fixedCharges.filter(item=>item);
+        console.log('fixed charges: ', fixedCharges.filter(item => item));
+        return fixedCharges.filter(item => item);
 
     },
 
@@ -88,13 +88,19 @@ module.exports = {
             "metadata": {
                 "customer_id": req.userId,
                 "customer_name": user.firstName + " " + user.lastName,
-                "courseId":course._id,
+                "courseId": course._id,
             },
 
         }
         const charge = await Charge.create(chargeData);
         console.log('charge: ', charge)
         const bitcoinAddress = charge.addresses.bitcoin;
+
+        await Transaction.findOneAndDelete({
+            userId: req.userId,
+            courseId: courseId,
+            status: "pending",
+        });
 
         const newTransaction = new Transaction({
             userId: req.userId,
@@ -105,19 +111,20 @@ module.exports = {
             isSuccess: false,
             isRefund: false,
             status: 'pending',
-            coinbaseChargeId:charge.id,
-            address:bitcoinAddress,
-            expiration:charge.expires_at,
+            coinbaseChargeId: charge.id,
+            address: bitcoinAddress,
+            expiration: charge.expires_at,
         });
+
         await newTransaction.save()
         console.log('bitcoinAddress: ', bitcoinAddress);
         const expiration = new Date(charge.expires_at).getTime();
-        console.log('expiration',expiration)
+        console.log('expiration', expiration)
         return {
-           currency:'bitcoin',
-           amount:charge.pricing.bitcoin.amount,
-           address:bitcoinAddress,
-           expiration:expiration, 
+            currency: 'bitcoin',
+            amount: charge.pricing.bitcoin.amount,
+            address: bitcoinAddress,
+            expiration: expiration,
         };
 
     },
@@ -238,7 +245,7 @@ module.exports = {
             throw error;
         }
 
-        const transactions = await Transaction.find({ userId: req.userId});
+        const transactions = await Transaction.find({ userId: req.userId });
 
         return transactions;
 
