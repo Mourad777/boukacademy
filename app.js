@@ -96,8 +96,8 @@ app.post('/', function (req, res) {
     console.log('req.body',req.body);
     event = Webhook.verifyEventBody(
       // data,
-      // req.rawBody,
-      req.body,
+      req.rawBody,
+      // req.body,
       req.headers['x-cc-webhook-signature'],
       process.env.COIN_BASE_WEBHOOK_SECRET
     );
