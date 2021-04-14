@@ -57,8 +57,8 @@ if (authHeader) {
         if (!user) {
           next()
         }
-        const isAccountSuspended = user.isAccountSuspended
-        const isAccountApproved = user.isAccountApproved
+        const isAccountSuspended = user.isAccountSuspended;
+        const isAccountApproved = user.isAccountApproved;
 
         const admin = await Instructor.findOne({ admin: true }).populate(
           "configuration"

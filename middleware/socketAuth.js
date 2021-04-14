@@ -1,6 +1,4 @@
 const jwt = require("jsonwebtoken");
-const redis = require("redis");
-const client = redis.createClient(process.env.REDIS_URL);
 
 module.exports = (socket, next) => {
   if (socket.handshake.query.token !== 'null') {
@@ -45,7 +43,7 @@ module.exports = (socket, next) => {
       socket.userId = userId;
 
     } else {
-      next(new Error("Authentication error"));
+      next(new Error("Socket authentication error"));
     }
   }
   next();
