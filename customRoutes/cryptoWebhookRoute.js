@@ -2,7 +2,8 @@ const io = require("../socket");
 const Transaction = require('../models/transaction')
 const Instructor = require("../models/instructor");
 const Webhook = require('coinbase-commerce-node').Webhook;
-const { enrollApprove, enrollRequest } = require("../graphql/resolvers/course/course");
+const enrollRequest = require('../graphql/resolvers/course/enrollRequest')
+const enrollApprove = require('../graphql/resolvers/course/enrollApprove')
 
 module.exports = async function (req, res) {
     var event;
