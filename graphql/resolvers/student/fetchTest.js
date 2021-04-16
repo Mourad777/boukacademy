@@ -97,12 +97,14 @@ module.exports = async function ({ testId, password }, req) {
         error.code = 403;
         throw error;
     }
-    if ((dueDate < Date.now()) && !test.assignment) {
+    if ((dueDate < Date.now()) && !test.assignment &&
+        !((foundTestResult || {}).graded === true)) {
         const error = new Error("The test is past due");
         error.code = 403;
         throw error;
     }
-    if (((dueDate + (test.lateDaysAllowed * 86400000)) < Date.now()) && test.assignment) {
+    if (((dueDate + (test.lateDaysAllowed * 86400000)) < Date.now()) && test.assignment &&
+        !((foundTestResult || {}).graded === true)) {
         const error = new Error("The assignment is past due");
         error.code = 403;
         throw error;
@@ -186,7 +188,7 @@ module.exports = async function ({ testId, password }, req) {
     if (
         isPastDue &&
         test.allowLateSubmission &&
-        !((foundTestResult || {}).closed === true)&&
+        !((foundTestResult || {}).closed === true) &&
         !((foundTestResult || {}).graded === true)
     ) {
         //case for closed assignment but allows late submission of a specific amount of days
