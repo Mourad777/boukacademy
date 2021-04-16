@@ -5,6 +5,7 @@ const Webhook = require('coinbase-commerce-node').Webhook;
 const enrollRequest = require('../graphql/resolvers/course/enrollRequest')
 const enrollApprove = require('../graphql/resolvers/course/enrollApprove')
 
+//get real-time updates on the status of crypto transactions
 module.exports = async function (req, res) {
     var event;
     try {

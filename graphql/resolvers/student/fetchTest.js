@@ -175,7 +175,8 @@ module.exports = async function ({ testId, password }, req) {
     if (
         isPastDue &&
         !test.allowLateSubmission &&
-        !((foundTestResult || {}).closed === true)
+        !((foundTestResult || {}).closed === true) &&
+        !((foundTestResult || {}).graded === true)
     ) {
         //case for closed test or assignment, no late submission allowed
         const error = new Error("Test or assignment past due");
@@ -185,7 +186,8 @@ module.exports = async function ({ testId, password }, req) {
     if (
         isPastDue &&
         test.allowLateSubmission &&
-        !((foundTestResult || {}).closed === true)
+        !((foundTestResult || {}).closed === true)&&
+        !((foundTestResult || {}).graded === true)
     ) {
         //case for closed assignment but allows late submission of a specific amount of days
         //1 day = 86400000

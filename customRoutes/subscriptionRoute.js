@@ -1,3 +1,5 @@
+//attach a subscription object to user to enable the
+//reception of notifications
 module.exports = async (req, res) => {
     const subscription = req.body;
     let userType;
