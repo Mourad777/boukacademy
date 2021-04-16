@@ -5,7 +5,6 @@ const Course = require("../models/course");
 const Student = require("../models/student");
 const Instructor = require("../models/instructor");
 const Configuration = require("../models/configuration");
-const { validateOfficehour } = require("./validate-officehour");
 const redis = require("redis");
 const { getObjectUrl } = require("../s3");
 const client = redis.createClient(process.env.REDIS_URL);

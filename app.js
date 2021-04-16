@@ -24,6 +24,7 @@ require("./util/cache");
 require("./util/compareArrays");
 const mongoose = require("mongoose");
 const { bucketCleanup } = require("./util/awsBucketCleanup");
+const { clearActiveUsers } = require("./util/clearActiveUsers");
 const multerUpload = multer().any();
 
 const {
@@ -118,7 +119,7 @@ mongoose
       console.log('aws cleanup task')
     })
     const clearActiveUsersTask = new Task('clear active users', () => {
-
+      clearActiveUsers()
       console.log('clear active users task')
     })
     const cleanAWSJob = new SimpleIntervalJob({ days: 7, }, cleanAWSTask)
