@@ -37,6 +37,7 @@ module.exports = async function (
     },
     req
 ) {
+
     //sectionGrades is an array with 4 slots corresponding to
     //mc section,essay section,speaking section, and fillblanksection
     //respectively
